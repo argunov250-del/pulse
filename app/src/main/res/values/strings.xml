@@ -210,4 +210,18 @@ Pulse ничего не записывает в Health Connect и не изме�
     <string name="cycle_row_gap">дальше нет данных о сне</string>
     <string name="cycle_row_now">идёт сейчас</string>
     <string name="duration_h_m_short">%1$d ч %2$02d м</string>
+
+    <!-- Экран «Сегодня» на настоящих данных -->
+    <string name="today_last_cycle">Последний цикл: с %1$s</string>
+    <string name="today_stale_title">Свежего сна пока нет</string>
+    <string name="today_stale_text">Показаны данные последнего известного цикла. Откройте приложение ваших часов, чтобы оно передало новый сон, — Pulse подхватит его при синхронизации.</string>
+    <string name="recovery_zone_unknown">Нет данных</string>
+    <string name="recovery_hint_unknown">Для расчёта нужен хотя бы пульс во сне.</string>
+    <string name="accuracy_calibrating">Калибровка: значение приблизительное</string>
+    <string name="accuracy_low">Низкая точность: не хватает части данных</string>
+    <string name="strain_no_data">нет данных пульса</string>
+    <string name="hrv_unit_sdnn">мс · SDNN</string>
+    <string name="vital_no_data">нет данных</string>
+    <string name="vital_calibrating">калибровка</string>
+    <string name="bio_age_no_age">Нужен ваш возраст. Он берётся из архива Apple Health; ввод вручную появится в настройках профиля в следующем обновлении.</string>
 </resources>

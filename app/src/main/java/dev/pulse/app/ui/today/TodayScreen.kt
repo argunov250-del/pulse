@@ -64,6 +64,9 @@ fun TodayScreen(
     ) {
         Header(state, onOpenSettings)
         if (showConnectCard) ConnectCard(onConnect)
+        if (state.stale) {
+            NoteCard(stringResource(R.string.today_stale_title), stringResource(R.string.today_stale_text))
+        }
         RecoveryCard(state)
         Row(
             modifier = Modifier
@@ -82,7 +85,7 @@ fun TodayScreen(
         ) {
             VitalCard(
                 label = stringResource(R.string.hrv_label),
-                unit = stringResource(R.string.hrv_unit),
+                unit = stringResource(if (state.hrvIsSdnn) R.string.hrv_unit_sdnn else R.string.hrv_unit),
                 vital = state.hrv,
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             )
@@ -99,7 +102,7 @@ fun TodayScreen(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             )
         }
-        BioAgeCard(state.bioAge)
+        BioAgeCard(state.bioAge, state.ageUnknown)
         Spacer(Modifier.height(8.dp))
     }
 }
@@ -121,7 +124,10 @@ private fun Header(state: TodayUiState, onOpenSettings: () -> Unit) {
                 color = colors.textPrimary,
             )
             Text(
-                text = stringResource(R.string.today_cycle_started, state.cycleStartedAt),
+                text = stringResource(
+                    if (state.stale) R.string.today_last_cycle else R.string.today_cycle_started,
+                    state.cycleStartedAt,
+                ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.textSecondary,
             )
@@ -172,19 +178,33 @@ private fun ConnectCard(onConnect: () -> Unit) {
 }
 
 @Composable
+private fun NoteCard(title: String, text: String) {
+    val colors = PulseTheme.colors
+    GlassCard(modifier = Modifier.fillMaxWidth(), cornerRadius = 20.dp, contentPadding = PaddingValues(14.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(text = title, style = MaterialTheme.typography.titleSmall, color = colors.recoveryYellow)
+            Text(text = text, style = MaterialTheme.typography.bodySmall, color = colors.textSecondary)
+        }
+    }
+}
+
+@Composable
 private fun RecoveryCard(state: TodayUiState) {
     val colors = PulseTheme.colors
-    val zone = recoveryZone(state.recoveryPercent)
+    val percent = state.recoveryPercent
+    val zone = percent?.let(::recoveryZone)
     val zoneColor = when (zone) {
         RecoveryZone.GREEN -> colors.recoveryGreen
         RecoveryZone.YELLOW -> colors.recoveryYellow
         RecoveryZone.RED -> colors.recoveryRed
+        null -> colors.textSecondary
     }
     val zoneName = stringResource(
         when (zone) {
             RecoveryZone.GREEN -> R.string.recovery_zone_green
             RecoveryZone.YELLOW -> R.string.recovery_zone_yellow
             RecoveryZone.RED -> R.string.recovery_zone_red
+            null -> R.string.recovery_zone_unknown
         },
     )
     val hint = stringResource(
@@ -192,32 +212,34 @@ private fun RecoveryCard(state: TodayUiState) {
             RecoveryZone.GREEN -> R.string.recovery_hint_green
             RecoveryZone.YELLOW -> R.string.recovery_hint_yellow
             RecoveryZone.RED -> R.string.recovery_hint_red
+            null -> R.string.recovery_hint_unknown
         },
     )
-    val target = strainTarget(zone)
 
     GlassCard(modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             MetricRing(
-                progress = state.recoveryPercent / 100f,
+                progress = (percent ?: 0) / 100f,
                 color = zoneColor,
                 diameter = 132.dp,
                 strokeWidth = 12.dp,
             ) { fraction ->
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
-                        text = (state.recoveryPercent * fraction).roundToInt().toString(),
+                        text = percent?.let { (it * fraction).roundToInt().toString() } ?: "—",
                         fontSize = 40.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = colors.textPrimary,
                     )
-                    Text(
-                        text = "%",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = colors.textSecondary,
-                        modifier = Modifier.padding(start = 2.dp, bottom = 7.dp),
-                    )
+                    if (percent != null) {
+                        Text(
+                            text = "%",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = colors.textSecondary,
+                            modifier = Modifier.padding(start = 2.dp, bottom = 7.dp),
+                        )
+                    }
                 }
             }
             Spacer(Modifier.width(16.dp))
@@ -246,16 +268,33 @@ private fun RecoveryCard(state: TodayUiState) {
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.textSecondary,
                 )
-                Text(
-                    text = stringResource(
-                        R.string.strain_target,
-                        target.start.roundToInt().toString(),
-                        target.endInclusive.roundToInt().toString(),
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium,
-                    color = colors.strain,
-                )
+                if (zone != null) {
+                    val target = strainTarget(zone)
+                    Text(
+                        text = stringResource(
+                            R.string.strain_target,
+                            target.start.roundToInt().toString(),
+                            target.endInclusive.roundToInt().toString(),
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = colors.strain,
+                    )
+                }
+                // Пометки о точности: калибровка важнее, чем «низкая точность».
+                val accuracyNote = when {
+                    percent == null -> null
+                    state.calibrating -> R.string.accuracy_calibrating
+                    state.recoveryLowAccuracy -> R.string.accuracy_low
+                    else -> null
+                }
+                if (accuracyNote != null) {
+                    Text(
+                        text = stringResource(accuracyNote),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.recoveryYellow,
+                    )
+                }
             }
         }
     }
@@ -266,14 +305,18 @@ private fun StrainCard(state: TodayUiState, modifier: Modifier = Modifier) {
     val colors = PulseTheme.colors
     RingCard(
         title = stringResource(R.string.strain_label),
-        caption = stringResource(R.string.strain_of_max, Config.STRAIN_MAX.roundToInt().toString()),
-        progress = state.strain / Config.STRAIN_MAX,
+        caption = if (state.strain == null) {
+            stringResource(R.string.strain_no_data)
+        } else {
+            stringResource(R.string.strain_of_max, Config.STRAIN_MAX.roundToInt().toString())
+        },
+        progress = (state.strain ?: 0f) / Config.STRAIN_MAX,
         color = colors.strain,
         delayMillis = 150,
         modifier = modifier,
     ) { fraction ->
         Text(
-            text = formatNumber(state.strain * fraction, 1),
+            text = state.strain?.let { formatNumber(it * fraction, 1) } ?: "—",
             fontSize = 28.sp,
             fontWeight = FontWeight.SemiBold,
             color = colors.textPrimary,
@@ -359,21 +402,22 @@ private fun RingCard(
 private fun VitalCard(
     label: String,
     unit: String,
-    vital: VitalUi,
+    vital: VitalUi?,
     modifier: Modifier = Modifier,
 ) {
     val colors = PulseTheme.colors
-    val delta = vital.value - vital.baseline
+    val baseline = vital?.baseline
+    val delta = if (vital != null && baseline != null) vital.value - baseline else null
     // Цвет отклонения: хорошо — зелёный, плохо — жёлтый, почти без изменений — серый.
-    val threshold = if (vital.decimals == 0) 0.5f else 0.05f
+    val threshold = if (vital?.decimals == 0) 0.5f else 0.05f
     val deltaColor = when {
-        abs(delta) < threshold -> colors.textSecondary
-        vital.higherIsBetter == null -> colors.textSecondary
+        delta == null || abs(delta) < threshold -> colors.textSecondary
+        vital?.higherIsBetter == null -> colors.textSecondary
         (delta > 0) == vital.higherIsBetter -> colors.recoveryGreen
         else -> colors.recoveryYellow
     }
     val arrow = when {
-        abs(delta) < threshold -> "•"
+        delta == null || abs(delta) < threshold -> "•"
         delta > 0 -> "▲"
         else -> "▼"
     }
@@ -392,7 +436,7 @@ private fun VitalCard(
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                text = formatNumber(vital.value, vital.decimals),
+                text = vital?.let { formatNumber(it.value, it.decimals) } ?: "—",
                 fontSize = 26.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = colors.textPrimary,
@@ -402,14 +446,20 @@ private fun VitalCard(
                 style = MaterialTheme.typography.labelSmall,
                 color = colors.textSecondary,
             )
+            if (vital != null && delta != null) {
+                Text(
+                    text = "$arrow ${formatNumber(abs(delta), vital.decimals)}",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = deltaColor,
+                )
+            }
             Text(
-                text = "$arrow ${formatNumber(abs(delta), vital.decimals)}",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Medium,
-                color = deltaColor,
-            )
-            Text(
-                text = stringResource(R.string.baseline_value, formatNumber(vital.baseline, vital.decimals)),
+                text = when {
+                    vital == null -> stringResource(R.string.vital_no_data)
+                    baseline == null -> stringResource(R.string.vital_calibrating)
+                    else -> stringResource(R.string.baseline_value, formatNumber(baseline, vital.decimals))
+                },
                 style = MaterialTheme.typography.labelSmall,
                 color = colors.textSecondary,
                 maxLines = 1,
@@ -420,7 +470,7 @@ private fun VitalCard(
 }
 
 @Composable
-private fun BioAgeCard(bioAge: BioAgeUi?) {
+private fun BioAgeCard(bioAge: BioAgeUi?, ageUnknown: Boolean) {
     val colors = PulseTheme.colors
     GlassCard(modifier = Modifier.fillMaxWidth()) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -431,7 +481,7 @@ private fun BioAgeCard(bioAge: BioAgeUi?) {
             )
             if (bioAge == null) {
                 Text(
-                    text = stringResource(R.string.bio_age_no_data),
+                    text = stringResource(if (ageUnknown) R.string.bio_age_no_age else R.string.bio_age_no_data),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.textSecondary,
                 )
@@ -459,7 +509,8 @@ private fun BioAgeCard(bioAge: BioAgeUi?) {
                 color = summaryColor,
             )
             Text(
-                text = stringResource(R.string.bio_age_note),
+                text = stringResource(R.string.bio_age_note) +
+                    if (bioAge.lowAccuracy) " " + stringResource(R.string.accuracy_low) + "." else "",
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.textSecondary,
             )
