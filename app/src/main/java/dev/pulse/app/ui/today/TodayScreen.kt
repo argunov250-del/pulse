@@ -36,6 +36,7 @@ import dev.pulse.app.algorithms.RecoveryZone
 import dev.pulse.app.algorithms.recoveryZone
 import dev.pulse.app.algorithms.strainTarget
 import dev.pulse.app.ui.components.MetricRing
+import dev.pulse.app.ui.components.PulseButton
 import dev.pulse.app.ui.glass.GlassCard
 import dev.pulse.app.ui.glass.GlassIconButton
 import dev.pulse.app.ui.theme.PulseTheme
@@ -48,6 +49,9 @@ fun TodayScreen(
     state: TodayUiState,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
+    /** true — показать карточку «Подключите свои данные». */
+    showConnectCard: Boolean = false,
+    onConnect: () -> Unit = {},
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     Column(
@@ -59,6 +63,7 @@ fun TodayScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Header(state, onOpenSettings)
+        if (showConnectCard) ConnectCard(onConnect)
         RecoveryCard(state)
         Row(
             modifier = Modifier
@@ -139,6 +144,30 @@ private fun Header(state: TodayUiState, onOpenSettings: () -> Unit) {
             contentDescription = stringResource(R.string.settings_title),
             onClick = onOpenSettings,
         )
+    }
+}
+
+@Composable
+private fun ConnectCard(onConnect: () -> Unit) {
+    val colors = PulseTheme.colors
+    GlassCard(modifier = Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = stringResource(R.string.today_connect_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = colors.textPrimary,
+            )
+            Text(
+                text = stringResource(R.string.today_connect_text),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.textSecondary,
+            )
+            PulseButton(
+                text = stringResource(R.string.today_connect_button),
+                onClick = onConnect,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 }
 

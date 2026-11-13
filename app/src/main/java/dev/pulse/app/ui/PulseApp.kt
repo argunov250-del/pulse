@@ -19,6 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.pulse.app.R
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.chrisbanes.haze.hazeSource
 import dev.pulse.app.ui.glass.GlassBackground
 import dev.pulse.app.ui.glass.LocalHazeState
@@ -26,6 +29,8 @@ import dev.pulse.app.ui.navigation.BottomBarSpace
 import dev.pulse.app.ui.navigation.GlassBottomBar
 import dev.pulse.app.ui.navigation.PulseTab
 import dev.pulse.app.ui.settings.SettingsScreen
+import dev.pulse.app.ui.sources.DataSourcesScreen
+import dev.pulse.app.ui.sources.DataSourcesViewModel
 import dev.pulse.app.ui.stub.StubScreen
 import dev.pulse.app.ui.today.FakeTodayData
 import dev.pulse.app.ui.today.TodayScreen
@@ -34,11 +39,25 @@ import dev.pulse.app.ui.today.TodayScreen
 @Composable
 fun PulseApp() {
     var tab by rememberSaveable { mutableStateOf(PulseTab.TODAY) }
-    var settingsOpen by rememberSaveable { mutableStateOf(false) }
+    // Экраны, открытые поверх вкладок (настройки, источники данных), в порядке открытия.
+    var overlays by rememberSaveable { mutableStateOf(listOf<Overlay>()) }
+    val overlay = overlays.lastOrNull()
+    val settingsOpen = overlay != null
+    val open = { screen: Overlay -> overlays = overlays + screen }
+    val back = { overlays = overlays.dropLast(1) }
 
-    // Системная кнопка «Назад»: из настроек — на вкладку, с любой вкладки — на «Сегодня».
+    // Системная кнопка «Назад»: закрывает верхний экран, а с любой вкладки ведёт на «Сегодня».
     BackHandler(enabled = settingsOpen || tab != PulseTab.TODAY) {
-        if (settingsOpen) settingsOpen = false else tab = PulseTab.TODAY
+        if (settingsOpen) back() else tab = PulseTab.TODAY
+    }
+
+    // Состояние Health Connect общее для всего приложения; перечитываем при каждом возврате в него
+    // (например, после того как человек выдал разрешения в самом Health Connect).
+    val sourcesViewModel: DataSourcesViewModel = hiltViewModel()
+    val sources by sourcesViewModel.state.collectAsStateWithLifecycle()
+    LifecycleResumeEffect(Unit) {
+        sourcesViewModel.refresh()
+        onPauseOrDispose { }
     }
 
     val navBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -58,10 +77,28 @@ fun PulseApp() {
                     .fillMaxSize()
                     .then(if (hazeState != null) Modifier.hazeSource(hazeState, zIndex = 1f) else Modifier),
             ) {
-                if (settingsOpen) {
+                val overlayPadding = PaddingValues(bottom = navBarBottom + 12.dp)
+                if (overlay == Overlay.SETTINGS) {
                     SettingsScreen(
-                        onBack = { settingsOpen = false },
-                        contentPadding = PaddingValues(bottom = navBarBottom + 12.dp),
+                        onBack = back,
+                        onOpenSources = { open(Overlay.DATA_SOURCES) },
+                        sourcesSummary = if (sources.needsConnection) {
+                            stringResource(R.string.sources_settings_not_connected)
+                        } else {
+                            stringResource(
+                                R.string.sources_settings_connected,
+                                sources.grantedCount,
+                                sources.supportedCount,
+                            )
+                        },
+                        contentPadding = overlayPadding,
+                    )
+                } else if (overlay == Overlay.DATA_SOURCES) {
+                    DataSourcesScreen(
+                        state = sources,
+                        viewModel = sourcesViewModel,
+                        onBack = back,
+                        contentPadding = overlayPadding,
                     )
                 } else {
                     // Внизу оставляем место под меню, чтобы последнюю карточку можно было докрутить.
@@ -69,7 +106,9 @@ fun PulseApp() {
                     when (tab) {
                         PulseTab.TODAY -> TodayScreen(
                             state = FakeTodayData.state, // Фаза 1: демо-данные.
-                            onOpenSettings = { settingsOpen = true },
+                            onOpenSettings = { open(Overlay.SETTINGS) },
+                            showConnectCard = sources.needsConnection,
+                            onConnect = { open(Overlay.DATA_SOURCES) },
                             contentPadding = padding,
                         )
                         PulseTab.SLEEP -> Stub(R.string.tab_sleep, R.string.stub_sleep, padding)
@@ -91,6 +130,9 @@ fun PulseApp() {
         }
     }
 }
+
+/** Экраны, которые открываются поверх вкладок. */
+private enum class Overlay { SETTINGS, DATA_SOURCES }
 
 @Composable
 private fun Stub(titleRes: Int, descriptionRes: Int, padding: PaddingValues) {

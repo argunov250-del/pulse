@@ -4,4 +4,6 @@ plugins {
     // Kotlin для Android встроен в плагин сборки; эта строка лишь задаёт его версию.
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlin.compose) apply false
+    alias(libs.plugins.ksp) apply false
+    alias(libs.plugins.hilt) apply false
 }

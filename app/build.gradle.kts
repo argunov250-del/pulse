@@ -3,6 +3,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
 }
 
 // Номер сборки приходит из GitHub Actions (-PbuildNumber=N). Локально — 1.
@@ -50,6 +52,16 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.haze)
     implementation(libs.haze.blur)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+
+    // Health Connect — источник данных о здоровье.
+    implementation(libs.health.connect)
+
+    // Hilt — «склеивает» части приложения между собой (внедрение зависимостей).
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.hilt.viewmodel.compose)
 
     testImplementation(libs.junit)
 }
