@@ -93,6 +93,7 @@ fun DataSourcesScreen(
             text = stringResource(R.string.sources_intro_text),
         )
 
+        val healthConnectReady = state.status == HealthConnectStatus.AVAILABLE && !state.loading
         when {
             state.status == null || state.loading -> InfoCard(
                 title = stringResource(R.string.sources_checking),
@@ -115,6 +116,8 @@ fun DataSourcesScreen(
 
             else -> {
                 ConnectionCard(state, requestAccess, openHealthConnect)
+                // Импорт ставим выше длинного списка видов данных, чтобы не приходилось листать.
+                AppleImportCard()
                 Text(
                     text = stringResource(R.string.data_list_title),
                     style = MaterialTheme.typography.titleMedium,
@@ -124,6 +127,9 @@ fun DataSourcesScreen(
                 state.items.forEach { item -> DataTypeCard(item) }
             }
         }
+
+        // Импорт из Apple Health не зависит от Health Connect, поэтому карточка есть всегда.
+        if (!healthConnectReady) AppleImportCard()
     }
 }
 
