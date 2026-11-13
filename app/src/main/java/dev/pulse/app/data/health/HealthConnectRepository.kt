@@ -22,6 +22,8 @@ import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
 import androidx.health.connect.client.records.Vo2MaxRecord
 import androidx.health.connect.client.records.WeightRecord
+import androidx.health.connect.client.aggregate.AggregateMetric
+import androidx.health.connect.client.request.AggregateGroupByDurationRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -163,8 +165,60 @@ class HealthConnectRepository @Inject constructor(
         else -> null
     }
 
+    // ---- Чтение для синхронизации ----
+
+    /** Разрешение читать данные, когда приложение закрыто; null — телефон так не умеет. */
+    fun backgroundReadPermission(): String? = runCatching {
+        val status = client.features.getFeatureStatus(HealthConnectFeatures.FEATURE_READ_HEALTH_DATA_IN_BACKGROUND)
+        if (status == HealthConnectFeatures.FEATURE_STATUS_AVAILABLE) {
+            HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND
+        } else {
+            null
+        }
+    }.getOrNull()
+
+    /** Читает все записи одного вида за период, страница за страницей. */
+    suspend fun <T : Record> readAll(
+        recordClass: KClass<T>,
+        from: Instant,
+        to: Instant,
+        onPage: (List<T>) -> Unit,
+    ) {
+        var pageToken: String? = null
+        do {
+            val response = client.readRecords(
+                ReadRecordsRequest(
+                    recordType = recordClass,
+                    timeRangeFilter = TimeRangeFilter.between(from, to),
+                    pageSize = PAGE_SIZE,
+                    pageToken = pageToken,
+                ),
+            )
+            onPage(response.records)
+            pageToken = response.pageToken
+        } while (!pageToken.isNullOrEmpty())
+    }
+
+    /**
+     * Суммы по часам (шаги, калории). Считает сам Health Connect — он умеет не складывать
+     * одни и те же шаги, записанные и часами, и телефоном.
+     * @return пары «начало часа → значение».
+     */
+    suspend fun <T : Any> hourlyTotals(
+        metric: AggregateMetric<T>,
+        from: Instant,
+        to: Instant,
+        toDouble: (T) -> Double,
+    ): List<Pair<Instant, Double>> = client.aggregateGroupByDuration(
+        AggregateGroupByDurationRequest(
+            metrics = setOf(metric),
+            timeRangeFilter = TimeRangeFilter.between(from, to),
+            timeRangeSlicer = Duration.ofHours(1),
+        ),
+    ).mapNotNull { bucket -> bucket.result[metric]?.let { bucket.startTime to toDouble(it) } }
+
     /** Человеческое название приложения-источника; если узнать нельзя — имя пакета. */
-    private fun appLabel(packageName: String): String = runCatching {
+    fun appLabel(packageName: String): String = runCatching {
         val pm = context.packageManager
         pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)).toString()
     }.getOrDefault(packageName)

@@ -6,6 +6,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.pulse.app.data.health.DataAvailability
 import dev.pulse.app.data.health.HealthConnectRepository
 import dev.pulse.app.data.health.HealthConnectStatus
+import dev.pulse.app.data.health.HealthConnectSyncer
+import dev.pulse.app.data.health.SyncState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +23,10 @@ data class DataSourcesUiState(
     val items: List<DataAvailability> = emptyList(),
     /** Пользователь нажал «Разрешить», но ничего не выдал — подсказываем открыть Health Connect. */
     val requestWasDenied: Boolean = false,
+    /** Умеет ли телефон отдавать данные, когда приложение закрыто, и разрешено ли это. */
+    val backgroundSupported: Boolean = false,
+    val backgroundGranted: Boolean = false,
+    val sync: SyncState = SyncState(),
 ) {
     private val supported get() = items.filter { it.supported }
     val grantedCount: Int get() = supported.count { it.granted }
@@ -34,6 +40,7 @@ data class DataSourcesUiState(
 @HiltViewModel
 class DataSourcesViewModel @Inject constructor(
     private val repository: HealthConnectRepository,
+    private val syncer: HealthConnectSyncer,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DataSourcesUiState())
@@ -41,11 +48,24 @@ class DataSourcesViewModel @Inject constructor(
 
     private var refreshJob: Job? = null
 
+    init {
+        viewModelScope.launch {
+            syncer.loadState()
+            syncer.state.collect { sync -> _state.update { it.copy(sync = sync) } }
+        }
+    }
+
     val permissionContract get() = repository.permissionRequestContract()
 
     /** Разрешения, которые нужно запросить: все поддерживаемые телефоном виды данных. */
     fun permissionsToRequest(): Set<String> =
-        repository.supportedTypes().map(repository::permissionFor).toSet()
+        repository.supportedTypes().map(repository::permissionFor).toSet() +
+            listOfNotNull(repository.backgroundReadPermission())
+
+    /** Запустить синхронизацию прямо сейчас (кнопка на экране). */
+    fun syncNow() {
+        viewModelScope.launch { runCatching { syncer.sync() } }
+    }
 
     fun manageIntent() = repository.manageIntent()
     fun installIntent() = repository.installIntent()
@@ -61,12 +81,26 @@ class DataSourcesViewModel @Inject constructor(
             }
             _state.update { it.copy(status = status, loading = it.items.isEmpty()) }
             val items = repository.loadAvailability()
-            _state.update { it.copy(loading = false, items = items) }
+            val backgroundPermission = repository.backgroundReadPermission()
+            val backgroundGranted = backgroundPermission != null &&
+                backgroundPermission in repository.grantedPermissions()
+            _state.update {
+                it.copy(
+                    loading = false,
+                    items = items,
+                    backgroundSupported = backgroundPermission != null,
+                    backgroundGranted = backgroundGranted,
+                )
+            }
+            // Заодно подтягиваем свежие данные в базу, если давно этого не делали.
+            if (items.any { it.granted }) runCatching { syncer.syncIfStale() }
         }
     }
 
     fun onPermissionResult(granted: Set<String>) {
         _state.update { it.copy(requestWasDenied = granted.isEmpty() && !it.anyGranted) }
         refresh()
+        // Только что выдали доступ — сразу загружаем данные, не дожидаясь расписания.
+        if (granted.isNotEmpty()) syncNow()
     }
 }

@@ -47,7 +47,6 @@
     <string name="back">Назад</string>
 
     <string name="stub_title">Скоро здесь</string>
-    <string name="stub_sleep">Длительность и стадии сна, эффективность, потребность во сне и постоянство режима.</string>
     <string name="stub_strain">Нагрузка за цикл и по каждой тренировке, пульсовые зоны и цель на день.</string>
     <string name="stub_trends">Графики за 7, 30 и 90 дней: ВСР, пульс покоя, восстановление, нагрузка и сон.</string>
     <string name="stub_journal">Отметки о кофеине, алкоголе, поздней еде и стрессе — и как они влияют на восстановление.</string>
@@ -172,4 +171,43 @@ Pulse ничего не записывает в Health Connect и не изме�
     <string name="apple_fail_open">Не удалось открыть файл. Попробуйте выбрать его ещё раз.</string>
     <string name="apple_fail_cancelled">Загрузка отменена. Данные не сохранены.</string>
     <string name="apple_fail_other">Не удалось загрузить архив. Пришлите разработчику этот текст:</string>
+
+    <!-- Синхронизация -->
+    <string name="sync_title">Синхронизация</string>
+    <string name="sync_text">Pulse копирует данные из Health Connect в свою базу на телефоне — по ним считаются циклы и показатели.</string>
+    <string name="sync_running">Идёт синхронизация…</string>
+    <string name="sync_never">Синхронизации ещё не было.</string>
+    <string name="sync_last">Последняя синхронизация: %1$s</string>
+    <string name="sync_partial">Не удалось прочитать видов данных: %1$d. Остальное загружено.</string>
+    <string name="sync_now_button">Синхронизировать сейчас</string>
+    <string name="sync_background_off">Обновление в фоне выключено: данные подтягиваются, только когда вы открываете Pulse.</string>
+    <string name="sync_background_button">Разрешить обновление в фоне</string>
+    <string name="sync_background_on">Обновление в фоне включено: данные подтягиваются примерно раз в полчаса.</string>
+
+    <!-- Экран «Сон» -->
+    <string name="sleep_empty_title">Пока нет данных о сне</string>
+    <string name="sleep_empty_text">Подключите Health Connect или загрузите архив Apple Health в разделе «Настройки → Источники данных». Как только появится хотя бы один сон, здесь будут циклы.</string>
+    <string name="sleep_last_title">Последний основной сон</string>
+    <string name="sleep_asleep">%1$s сна</string>
+    <string name="sleep_in_bed_line">В кровати %1$s · эффективность %2$d%%</string>
+    <string name="sleep_in_bed_only">Источник знал только время в кровати — сам сон не измерялся (низкая точность).</string>
+    <string name="sleep_no_stages">Источник не передаёт стадии сна.</string>
+    <string name="sleep_source">Источник: %1$s</string>
+    <string name="stage_deep">Глубокий</string>
+    <string name="stage_rem">Быстрый (REM)</string>
+    <string name="stage_light">Лёгкий</string>
+    <string name="stage_asleep">Сон</string>
+    <string name="stage_awake">Бодрствование</string>
+    <string name="cycle_current_title">Текущий цикл</string>
+    <string name="cycle_current_text">Начался %1$s — идёт %2$s.</string>
+    <string name="cycle_current_none">Текущего цикла нет: последний основной сон был больше 36 часов назад или данные ещё не дошли.</string>
+    <string name="cycle_current_naps">Дремота в этом цикле: %1$d (%2$s).</string>
+    <string name="cycles_title">Последние циклы</string>
+    <string name="cycles_hint">Цикл — ваш «день»: от пробуждения после основного сна до следующего основного сна. К календарю не привязан.</string>
+    <string name="cycles_total">Всего циклов в истории: %1$s</string>
+    <string name="cycle_row_sleep">Сон перед циклом: %1$s</string>
+    <string name="cycle_row_naps">дремота: %1$d (%2$s)</string>
+    <string name="cycle_row_gap">дальше нет данных о сне</string>
+    <string name="cycle_row_now">идёт сейчас</string>
+    <string name="duration_h_m_short">%1$d ч %2$02d м</string>
 </resources>

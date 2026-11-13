@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
 
 /** Сколько чего лежит в базе — для экрана «Источники данных». */
 data class StoredDataSummary(
@@ -94,6 +95,38 @@ interface HealthDao {
 
     @Query("DELETE FROM workouts WHERE origin = :origin")
     fun deleteWorkouts(origin: Int)
+
+    // ---- Удаление «хвоста» начиная с момента (перед повторной синхронизацией этого отрезка) ----
+
+    @Query("DELETE FROM heart_rate_minutes WHERE origin = :origin AND minute >= :fromMinute")
+    fun deleteHeartRateFrom(origin: Int, fromMinute: Long)
+
+    @Query("DELETE FROM measurements WHERE origin = :origin AND type = :type AND time >= :fromTime")
+    fun deleteMeasurementsFrom(origin: Int, type: Int, fromTime: Long)
+
+    @Query("DELETE FROM hourly_totals WHERE origin = :origin AND type = :type AND hour >= :fromHour")
+    fun deleteHourlyTotalsFrom(origin: Int, type: Int, fromHour: Long)
+
+    @Query("DELETE FROM sleep_sessions WHERE origin = :origin AND startTime >= :fromTime")
+    fun deleteSleepSessionsFrom(origin: Int, fromTime: Long)
+
+    @Query("DELETE FROM workouts WHERE origin = :origin AND startTime >= :fromTime")
+    fun deleteWorkoutsFrom(origin: Int, fromTime: Long)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertHeartRateAll(items: List<HeartRateMinuteEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertHourlyTotals(items: List<HourlyTotalEntity>)
+
+    // ---- Чтение сна ----
+
+    /** Все сессии сна; список сам обновляется, когда в базе что-то меняется. */
+    @Query("SELECT * FROM sleep_sessions ORDER BY startTime")
+    fun observeSleepSessions(): Flow<List<SleepSessionEntity>>
+
+    @Query("SELECT * FROM sleep_stages WHERE sessionId = :sessionId ORDER BY startTime")
+    suspend fun sleepStages(sessionId: Long): List<SleepStageEntity>
 
     // ---- Сводка ----
 

@@ -68,5 +68,10 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
+    // WorkManager — фоновая синхронизация, даже когда приложение закрыто.
+    implementation(libs.androidx.work.runtime)
+    implementation(libs.hilt.work)
+    ksp(libs.hilt.androidx.compiler)
+
     testImplementation(libs.junit)
 }
