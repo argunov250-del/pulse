@@ -29,6 +29,7 @@ import dev.pulse.app.ui.navigation.BottomBarSpace
 import dev.pulse.app.ui.navigation.GlassBottomBar
 import dev.pulse.app.ui.navigation.PulseTab
 import dev.pulse.app.ui.settings.SettingsScreen
+import dev.pulse.app.ui.sleep.SleepScreen
 import dev.pulse.app.ui.sources.DataSourcesScreen
 import dev.pulse.app.ui.sources.DataSourcesViewModel
 import dev.pulse.app.ui.stub.StubScreen
@@ -111,7 +112,7 @@ fun PulseApp() {
                             onConnect = { open(Overlay.DATA_SOURCES) },
                             contentPadding = padding,
                         )
-                        PulseTab.SLEEP -> Stub(R.string.tab_sleep, R.string.stub_sleep, padding)
+                        PulseTab.SLEEP -> SleepScreen(contentPadding = padding)
                         PulseTab.STRAIN -> Stub(R.string.tab_strain, R.string.stub_strain, padding)
                         PulseTab.TRENDS -> Stub(R.string.tab_trends, R.string.stub_trends, padding)
                         PulseTab.JOURNAL -> Stub(R.string.tab_journal, R.string.stub_journal, padding)

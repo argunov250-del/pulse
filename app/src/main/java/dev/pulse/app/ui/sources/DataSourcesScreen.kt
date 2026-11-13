@@ -116,6 +116,7 @@ fun DataSourcesScreen(
 
             else -> {
                 ConnectionCard(state, requestAccess, openHealthConnect)
+                if (state.anyGranted) SyncCard(state, viewModel::syncNow, requestAccess)
                 // Импорт ставим выше длинного списка видов данных, чтобы не приходилось листать.
                 AppleImportCard()
                 Text(
@@ -169,6 +170,44 @@ private fun ConnectionCard(
                 text = stringResource(R.string.hc_denied_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.recoveryYellow,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SyncCard(state: DataSourcesUiState, syncNow: () -> Unit, requestAccess: () -> Unit) {
+    val colors = PulseTheme.colors
+    val sync = state.sync
+    val status = when {
+        sync.running -> stringResource(R.string.sync_running)
+        sync.lastSyncMs == null -> stringResource(R.string.sync_never)
+        else -> stringResource(R.string.sync_last, formatInstant(Instant.ofEpochMilli(sync.lastSyncMs)))
+    }
+    InfoCard(title = stringResource(R.string.sync_title), text = stringResource(R.string.sync_text)) {
+        Text(text = status, style = MaterialTheme.typography.bodyMedium, color = colors.textPrimary)
+        if (!sync.running && sync.failedTypes > 0) {
+            Text(
+                text = stringResource(R.string.sync_partial, sync.failedTypes),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.recoveryYellow,
+            )
+        }
+        if (!sync.running) {
+            PulseOutlinedButton(stringResource(R.string.sync_now_button), syncNow, Modifier.fillMaxWidth())
+        }
+        if (state.backgroundSupported && !state.backgroundGranted) {
+            Text(
+                text = stringResource(R.string.sync_background_off),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.recoveryYellow,
+            )
+            PulseButton(stringResource(R.string.sync_background_button), requestAccess, Modifier.fillMaxWidth())
+        } else if (state.backgroundGranted) {
+            Text(
+                text = stringResource(R.string.sync_background_on),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.textSecondary,
             )
         }
     }

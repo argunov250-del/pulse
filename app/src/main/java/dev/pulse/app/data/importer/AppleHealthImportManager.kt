@@ -17,6 +17,8 @@ import dev.pulse.app.data.db.SleepSessionEntity
 import dev.pulse.app.data.db.SleepStageEntity
 import dev.pulse.app.data.db.StoredDataSummary
 import dev.pulse.app.data.db.WorkoutEntity
+import dev.pulse.app.data.db.addHeartRate
+import dev.pulse.app.data.db.addHourlyTotal
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -230,15 +232,11 @@ class AppleHealthImportManager @Inject constructor(
                     val count = slot[1].toInt()
                     val min = slot[2].toInt()
                     val max = slot[3].toInt()
-                    if (dao.updateHeartRate(minute, origin, slot[0], count, min, max) == 0) {
-                        dao.insertHeartRate(HeartRateMinuteEntity(minute, origin, slot[0], count, min, max))
-                    }
+                    dao.addHeartRate(HeartRateMinuteEntity(minute, origin, slot[0], count, min, max))
                 }
                 if (measurements.isNotEmpty()) dao.insertMeasurements(measurements)
                 for ((key, total) in totals) {
-                    if (dao.updateHourlyTotal(key.first, key.second, origin, key.third, total) == 0) {
-                        dao.insertHourlyTotal(HourlyTotalEntity(key.first, key.second, origin, key.third, total))
-                    }
+                    dao.addHourlyTotal(HourlyTotalEntity(key.first, key.second, origin, key.third, total))
                 }
             }
             heartRate.clear()

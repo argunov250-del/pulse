@@ -19,6 +19,20 @@ object Config {
     val STRAIN_TARGET_GREEN = 14f..18f
     val STRAIN_TARGET_YELLOW = 10f..14f
     val STRAIN_TARGET_RED = 0f..10f
+
+    // ---- Циклы («дни» по сну) ----
+
+    /** Сон короче этого основным не считается (это дремота), минут чистого сна. */
+    const val MAIN_SLEEP_MIN_MINUTES = 150
+
+    /**
+     * Два основных сна не могут быть ближе друг к другу, чем это число часов
+     * (считаем между серединами). Из двух близких основным становится более длинный.
+     */
+    const val MAIN_SLEEP_SEPARATION_HOURS = 12
+
+    /** Если после пробуждения столько часов нет нового основного сна — данных нет, цикл обрывается. */
+    const val MAX_CYCLE_HOURS = 36
 }
 
 enum class RecoveryZone { GREEN, YELLOW, RED }
