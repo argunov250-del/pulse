@@ -68,6 +68,8 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.haze)
     implementation(libs.haze.blur)
+    // Vico — графики.
+    implementation(libs.vico.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
 
