@@ -17,6 +17,10 @@ data class StoredDataSummary(
     val lastTime: Long?,
 )
 
+data class HeartRatePoint(val minute: Long, val bpm: Double)
+
+data class ValuePoint(val timeMs: Long, val value: Double)
+
 /**
  * Запросы к базе. Функции записи намеренно обычные (не suspend): импорт вызывает их
  * сотни тысяч раз внутри одной транзакции в фоновом потоке.
@@ -127,6 +131,34 @@ interface HealthDao {
 
     @Query("SELECT * FROM sleep_stages WHERE sessionId = :sessionId ORDER BY startTime")
     suspend fun sleepStages(sessionId: Long): List<SleepStageEntity>
+
+    // ---- Чтение для расчёта метрик ----
+
+    /** Пульс по минутам; если минуту записали два источника — берётся общее среднее. */
+    @Query(
+        """
+        SELECT minute, SUM(bpmSum) / SUM(sampleCount) AS bpm
+        FROM heart_rate_minutes WHERE minute >= :fromMinute AND sampleCount > 0
+        GROUP BY minute ORDER BY minute
+        """,
+    )
+    suspend fun heartRateFrom(fromMinute: Long): List<HeartRatePoint>
+
+    @Query("SELECT time AS timeMs, value FROM measurements WHERE type = :type AND time >= :fromTime ORDER BY time")
+    suspend fun measurementsFrom(type: Int, fromTime: Long): List<ValuePoint>
+
+    @Query("SELECT time AS timeMs, value FROM measurements WHERE type = :type ORDER BY time DESC LIMIT 1")
+    suspend fun latestMeasurement(type: Int): ValuePoint?
+
+    /** Суммы по часам; если час записали несколько источников — берётся наибольшая, а не сумма. */
+    @Query(
+        """
+        SELECT hour * 3600000 AS timeMs, MAX(total) AS value
+        FROM hourly_totals WHERE type = :type AND hour >= :fromHour
+        GROUP BY hour ORDER BY hour
+        """,
+    )
+    suspend fun hourlyTotalsFrom(type: Int, fromHour: Long): List<ValuePoint>
 
     // ---- Сводка ----
 

@@ -2,38 +2,50 @@ package dev.pulse.app.ui.today
 
 /** Всё, что показывает экран «Сегодня». */
 data class TodayUiState(
-    /** true — данные ненастоящие (демо), пока не подключён Health Connect. */
+    /** true — данные ненастоящие (демо): в базе пока нет ни одного сна. */
     val isDemo: Boolean,
-    /** Когда начался текущий цикл (пробуждение после основного сна), уже в виде текста. */
+    /** Когда начался цикл (пробуждение), уже в виде текста. */
     val cycleStartedAt: String,
-    val recoveryPercent: Int,
-    val strain: Float,
+    /** true — свежего сна нет, показан последний известный цикл. */
+    val stale: Boolean = false,
+    /** null — посчитать не из чего. */
+    val recoveryPercent: Int?,
+    val recoveryLowAccuracy: Boolean = false,
+    /** true — «обычный уровень» ещё набирается, значения приблизительные. */
+    val calibrating: Boolean = false,
+    val strain: Float?,
     val sleepPerformancePercent: Int,
     val sleepActualMinutes: Int,
     val sleepNeedMinutes: Int,
-    val hrv: VitalUi,
-    val restingHeartRate: VitalUi,
-    val respiratoryRate: VitalUi,
+    val hrv: VitalUi?,
+    /** true — ВСР измерена методом SDNN (Apple), а не RMSSD. */
+    val hrvIsSdnn: Boolean = false,
+    val restingHeartRate: VitalUi?,
+    val respiratoryRate: VitalUi?,
     /** Биологический возраст; null — данных пока недостаточно. */
     val bioAge: BioAgeUi?,
+    /** true — возраст человека неизвестен, биологический возраст не посчитать. */
+    val ageUnknown: Boolean = false,
 )
 
 data class BioAgeUi(
     val bioAgeYears: Float,
     val chronologicalAgeYears: Int,
+    val lowAccuracy: Boolean = false,
 )
 
 /** Один показатель в маленькой карточке: значение и его обычный уровень (baseline). */
 data class VitalUi(
     val value: Float,
-    val baseline: Float,
+    /** null — обычный уровень ещё не набран. */
+    val baseline: Float?,
     /** Сколько знаков после запятой показывать. */
     val decimals: Int,
-    /** true — «больше = лучше» (HRV); false — «меньше = лучше» (пульс покоя). null — важно лишь отклонение. */
+    /** true — «больше = лучше» (ВСР); false — «меньше = лучше» (пульс покоя). null — важно лишь отклонение. */
     val higherIsBetter: Boolean?,
 )
 
-/** Демо-данные для фазы 1. В фазе 2–4 их заменят настоящие из Health Connect. */
+/** Демо-данные: показываются, пока в базе нет ни одного сна. */
 object FakeTodayData {
     val state = TodayUiState(
         isDemo = true,

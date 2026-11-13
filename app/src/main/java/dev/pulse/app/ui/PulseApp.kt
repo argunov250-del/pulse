@@ -36,7 +36,7 @@ import dev.pulse.app.ui.sleep.SleepScreen
 import dev.pulse.app.ui.sources.DataSourcesScreen
 import dev.pulse.app.ui.sources.DataSourcesViewModel
 import dev.pulse.app.ui.stub.StubScreen
-import dev.pulse.app.ui.today.FakeTodayData
+import dev.pulse.app.ui.today.TodayViewModel
 import dev.pulse.app.ui.today.TodayScreen
 
 /** Каркас приложения: фон, текущий экран и нижнее меню. */
@@ -59,8 +59,13 @@ fun PulseApp() {
     // (например, после того как человек выдал разрешения в самом Health Connect).
     val sourcesViewModel: DataSourcesViewModel = hiltViewModel()
     val sources by sourcesViewModel.state.collectAsStateWithLifecycle()
+    // Показатели для экрана «Сегодня»; null — ещё считаются.
+    val todayViewModel: TodayViewModel = hiltViewModel()
+    val todayState by todayViewModel.state.collectAsStateWithLifecycle()
+    val today = todayState
     LifecycleResumeEffect(Unit) {
         sourcesViewModel.refresh()
+        todayViewModel.refresh()
         onPauseOrDispose { }
     }
 
@@ -106,8 +111,8 @@ fun PulseApp() {
                     // Внизу оставляем место под меню, чтобы последнюю карточку можно было докрутить.
                     val padding = PaddingValues(top = statusBarTop, bottom = navBarBottom + BottomBarSpace)
                     when (tab) {
-                        PulseTab.TODAY -> TodayScreen(
-                            state = FakeTodayData.state, // Фаза 1: демо-данные.
+                        PulseTab.TODAY -> if (today != null) TodayScreen(
+                            state = today,
                             onOpenSettings = { open(Overlay.SETTINGS) },
                             showConnectCard = sources.needsConnection,
                             onConnect = { open(Overlay.DATA_SOURCES) },

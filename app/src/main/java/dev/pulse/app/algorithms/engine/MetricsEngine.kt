@@ -127,6 +127,8 @@ data class CycleMetrics(
 data class EngineOutput(
     val cycles: List<CycleMetrics>,
     val bioAge: BioAgeResult?,
+    /** Паспортный возраст, с которым считали (настоящий или по умолчанию). */
+    val ageYears: Double,
     /** true — возраст взят по умолчанию, HRmax и Bio Age неточны. */
     val ageUnknown: Boolean,
 )
@@ -263,6 +265,7 @@ object MetricsEngine {
         return EngineOutput(
             cycles = results,
             bioAge = bioAge(input, results, age),
+            ageYears = age,
             ageUnknown = profile.ageYears == null,
         )
     }
