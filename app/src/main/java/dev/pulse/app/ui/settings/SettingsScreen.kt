@@ -35,6 +35,7 @@ import dev.pulse.app.ui.theme.PulseTheme
 fun SettingsScreen(
     onBack: () -> Unit,
     onOpenSources: () -> Unit,
+    onOpenProfile: () -> Unit,
     sourcesSummary: String,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
@@ -68,7 +69,8 @@ fun SettingsScreen(
         }
         SettingsCard(
             title = stringResource(R.string.settings_profile),
-            text = stringResource(R.string.settings_profile_stub),
+            text = stringResource(R.string.settings_profile_summary),
+            onClick = onOpenProfile,
         )
         SettingsCard(
             title = stringResource(R.string.settings_sources),

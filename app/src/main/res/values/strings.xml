@@ -47,12 +47,10 @@
     <string name="back">Назад</string>
 
     <string name="stub_title">Скоро здесь</string>
-    <string name="stub_strain">Нагрузка за цикл и по каждой тренировке, пульсовые зоны и цель на день.</string>
-    <string name="stub_trends">Графики за 7, 30 и 90 дней: ВСР, пульс покоя, восстановление, нагрузка и сон.</string>
     <string name="stub_journal">Отметки о кофеине, алкоголе, поздней еде и стрессе — и как они влияют на восстановление.</string>
 
     <string name="settings_profile">Профиль</string>
-    <string name="settings_profile_stub">Возраст, пол и рост сейчас берутся из архива Apple Health. Ввод вручную появится в следующем обновлении.</string>
+    <string name="settings_profile_summary">Год рождения, пол, рост и максимальный пульс. От них зависят нагрузка и биологический возраст.</string>
     <string name="settings_sources">Источники данных</string>
     <string name="settings_disclaimer">Важно</string>
     <string name="settings_disclaimer_text">Pulse — не медицинское устройство. Все показатели, включая биологический возраст, — приблизительные оценки образа жизни. Они не предназначены для диагностики и лечения и не заменяют консультацию врача.</string>
@@ -224,5 +222,54 @@ Pulse ничего не записывает в Health Connect и не изме�
     <string name="hrv_unit_sdnn">мс · SDNN</string>
     <string name="vital_no_data">нет данных</string>
     <string name="vital_calibrating">калибровка</string>
-    <string name="bio_age_no_age">Нужен ваш возраст. Он берётся из архива Apple Health; ввод вручную появится в настройках профиля в следующем обновлении.</string>
+    <string name="bio_age_no_age">Нужен ваш возраст: укажите год рождения в «Настройки → Профиль».</string>
+
+    <!-- Профиль -->
+    <string name="profile_intro">Данные профиля хранятся только на телефоне. Если вы загружали архив Apple Health, часть полей уже заполнена из него.</string>
+    <string name="profile_birth_year">Год рождения</string>
+    <string name="profile_birth_year_hint">Нужен для максимального пульса и биологического возраста</string>
+    <string name="profile_birth_year_error">Проверьте год: похоже на опечатку</string>
+    <string name="profile_sex">Пол</string>
+    <string name="profile_sex_male">Мужской</string>
+    <string name="profile_sex_female">Женский</string>
+    <string name="profile_height">Рост, см</string>
+    <string name="profile_height_hint">Нужен для индекса массы тела (вместе с весом)</string>
+    <string name="profile_height_error">Рост должен быть от 100 до 250 см</string>
+    <string name="profile_hr_max">Максимальный пульс, уд/мин</string>
+    <string name="profile_hr_max_hint">Необязательно. Если пусто — по возрасту: около %1$d, или выше, если такой пульс встречался в данных</string>
+    <string name="profile_hr_max_error">Максимальный пульс должен быть от 120 до 230</string>
+    <string name="profile_save">Сохранить</string>
+    <string name="profile_saved">Сохранено, показатели пересчитаны</string>
+
+    <!-- Тренды -->
+    <string name="trends_range_days">%1$d дней</string>
+    <string name="trends_empty">Пока мало данных для графиков: нужно хотя бы два цикла с измерениями.</string>
+    <string name="trends_cycles_in_range">Циклов в периоде: %1$d. Период отсчитывается от последнего цикла с данными.</string>
+    <string name="trends_average">в среднем %1$s %2$s</string>
+    <string name="trends_min_max">от %1$s до %2$s</string>
+    <string name="unit_percent">%%</string>
+    <string name="unit_hours">ч</string>
+    <string name="unit_none"></string>
+
+    <!-- Нагрузка -->
+    <string name="strain_empty">Пока нет данных: нагрузка считается по пульсу внутри цикла, а цикл начинается после основного сна.</string>
+    <string name="strain_cycle_title">Цикл с %1$s</string>
+    <string name="strain_hr_max">Максимальный пульс в расчёте: %1$d</string>
+    <string name="strain_workouts_title">Тренировки в этом цикле</string>
+    <string name="strain_no_workouts">В этом цикле тренировок не записано.</string>
+    <string name="strain_workout_minutes">%1$d мин</string>
+    <string name="strain_workout_hr">пульс %1$d, макс. %2$d</string>
+    <string name="strain_history_title">Последние циклы</string>
+    <string name="strain_explain">Нагрузка считается по пульсу за весь цикл, от 0 до 21. Шкала «сжимается» к верху: подняться с 15 до 16 гораздо труднее, чем с 5 до 6.</string>
+    <string name="activity_running">Бег</string>
+    <string name="activity_walking">Ходьба</string>
+    <string name="activity_cycling">Велосипед</string>
+    <string name="activity_swimming">Плавание</string>
+    <string name="activity_hiking">Поход</string>
+    <string name="activity_strength">Силовая</string>
+    <string name="activity_hiit">Интервальная</string>
+    <string name="activity_yoga">Йога</string>
+    <string name="activity_elliptical">Эллипсоид</string>
+    <string name="activity_rowing">Гребля</string>
+    <string name="activity_other">Тренировка</string>
 </resources>

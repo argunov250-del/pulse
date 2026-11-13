@@ -31,7 +31,10 @@ import dev.pulse.app.ui.navigation.BottomBarMargin
 import dev.pulse.app.ui.navigation.BottomBarSpace
 import dev.pulse.app.ui.navigation.GlassBottomBar
 import dev.pulse.app.ui.navigation.PulseTab
+import dev.pulse.app.ui.profile.ProfileScreen
 import dev.pulse.app.ui.settings.SettingsScreen
+import dev.pulse.app.ui.strain.StrainScreen
+import dev.pulse.app.ui.trends.TrendsScreen
 import dev.pulse.app.ui.sleep.SleepScreen
 import dev.pulse.app.ui.sources.DataSourcesScreen
 import dev.pulse.app.ui.sources.DataSourcesViewModel
@@ -89,6 +92,7 @@ fun PulseApp() {
                     SettingsScreen(
                         onBack = back,
                         onOpenSources = { open(Overlay.DATA_SOURCES) },
+                        onOpenProfile = { open(Overlay.PROFILE) },
                         sourcesSummary = if (sources.needsConnection) {
                             stringResource(R.string.sources_settings_not_connected)
                         } else {
@@ -100,6 +104,8 @@ fun PulseApp() {
                         },
                         contentPadding = overlayPadding,
                     )
+                } else if (overlay == Overlay.PROFILE) {
+                    ProfileScreen(onBack = back, contentPadding = overlayPadding)
                 } else if (overlay == Overlay.DATA_SOURCES) {
                     DataSourcesScreen(
                         state = sources,
@@ -119,8 +125,8 @@ fun PulseApp() {
                             contentPadding = padding,
                         )
                         PulseTab.SLEEP -> SleepScreen(contentPadding = padding)
-                        PulseTab.STRAIN -> Stub(R.string.tab_strain, R.string.stub_strain, padding)
-                        PulseTab.TRENDS -> Stub(R.string.tab_trends, R.string.stub_trends, padding)
+                        PulseTab.STRAIN -> StrainScreen(contentPadding = padding)
+                        PulseTab.TRENDS -> TrendsScreen(contentPadding = padding)
                         PulseTab.JOURNAL -> Stub(R.string.tab_journal, R.string.stub_journal, padding)
                     }
                 }
@@ -151,7 +157,7 @@ fun PulseApp() {
 }
 
 /** Экраны, которые открываются поверх вкладок. */
-private enum class Overlay { SETTINGS, DATA_SOURCES }
+private enum class Overlay { SETTINGS, DATA_SOURCES, PROFILE }
 
 @Composable
 private fun Stub(titleRes: Int, descriptionRes: Int, padding: PaddingValues) {

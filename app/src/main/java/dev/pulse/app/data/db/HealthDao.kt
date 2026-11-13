@@ -83,6 +83,15 @@ interface HealthDao {
     @Query("SELECT value FROM app_meta WHERE `key` = :key")
     suspend fun getMeta(key: String): String?
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun saveMeta(item: AppMetaEntity)
+
+    @Query("DELETE FROM app_meta WHERE `key` = :key")
+    suspend fun deleteMeta(key: String)
+
+    @Query("SELECT * FROM workouts WHERE startTime >= :fromTime ORDER BY startTime")
+    suspend fun workoutsFrom(fromTime: Long): List<WorkoutEntity>
+
     // ---- Удаление всего, что пришло из одного источника (перед повторным импортом) ----
 
     @Query("DELETE FROM heart_rate_minutes WHERE origin = :origin")

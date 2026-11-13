@@ -6,14 +6,14 @@ import dev.pulse.app.algorithms.engine.EngineInput
 import dev.pulse.app.algorithms.engine.EngineOutput
 import dev.pulse.app.algorithms.engine.HeartRateSeries
 import dev.pulse.app.algorithms.engine.MetricsEngine
-import dev.pulse.app.algorithms.engine.Profile
 import dev.pulse.app.algorithms.engine.Sample
+import dev.pulse.app.algorithms.engine.WorkoutInput
 import dev.pulse.app.data.db.HealthDao
 import dev.pulse.app.data.db.SleepSessionEntity
 import dev.pulse.app.data.db.ValuePoint
 import dev.pulse.app.data.health.HealthConnectSyncer
-import dev.pulse.app.data.importer.AppleHealthImportManager
 import dev.pulse.app.data.importer.MeasurementType
+import dev.pulse.app.data.profile.ProfileRepository
 import dev.pulse.app.data.importer.TotalType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,8 +27,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
-import java.time.LocalDate
-import java.time.Period
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -46,6 +44,7 @@ data class MetricsState(
 @Singleton
 class MetricsRepository @Inject constructor(
     private val dao: HealthDao,
+    private val profiles: ProfileRepository,
     syncer: HealthConnectSyncer,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -97,24 +96,10 @@ class MetricsRepository @Inject constructor(
                 // Вес и VO2 max меняются редко — берём за всё время.
                 vo2Max = dao.measurementsFrom(MeasurementType.VO2_MAX.ordinal, 0).toSamples(),
                 weightKg = dao.measurementsFrom(MeasurementType.WEIGHT_KG.ordinal, 0).toSamples(),
-                profile = loadProfile(),
+                workouts = dao.workoutsFrom(fromMs).map { WorkoutInput(it.startTime, it.endTime, it.activity) },
+                profile = profiles.load().toEngineProfile(),
                 nowMs = nowMs,
             ),
-        )
-    }
-
-    /** Профиль: пока берётся из архива Apple Health (дата рождения, пол, рост). */
-    private suspend fun loadProfile(): Profile {
-        val age = dao.getMeta(AppleHealthImportManager.META_DATE_OF_BIRTH)?.let { text ->
-            runCatching {
-                val period = Period.between(LocalDate.parse(text), LocalDate.now())
-                period.years + period.months / 12.0
-            }.getOrNull()
-        }?.takeIf { it in 10.0..110.0 }
-        return Profile(
-            ageYears = age,
-            female = dao.getMeta(AppleHealthImportManager.META_SEX) == "Female",
-            heightCm = dao.latestMeasurement(MeasurementType.HEIGHT_CM.ordinal)?.value,
         )
     }
 
