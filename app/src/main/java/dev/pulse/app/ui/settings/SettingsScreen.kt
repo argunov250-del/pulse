@@ -1,5 +1,6 @@
 package dev.pulse.app.ui.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -17,18 +19,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.pulse.app.R
 import dev.pulse.app.ui.glass.GlassCard
+import dev.pulse.app.ui.glass.GlassDefaults
 import dev.pulse.app.ui.glass.GlassIconButton
 import dev.pulse.app.ui.theme.PulseTheme
 
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    onOpenSources: () -> Unit,
+    sourcesSummary: String,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
@@ -65,7 +72,8 @@ fun SettingsScreen(
         )
         SettingsCard(
             title = stringResource(R.string.settings_sources),
-            text = stringResource(R.string.settings_sources_stub),
+            text = sourcesSummary,
+            onClick = onOpenSources,
         )
         SettingsCard(
             title = stringResource(R.string.settings_disclaimer),
@@ -85,15 +93,31 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun SettingsCard(title: String, text: String) {
+private fun SettingsCard(title: String, text: String, onClick: (() -> Unit)? = null) {
     val colors = PulseTheme.colors
-    GlassCard(modifier = Modifier.fillMaxWidth()) {
+    val shape = RoundedCornerShape(GlassDefaults.CornerRadius)
+    val clickModifier = if (onClick != null) {
+        Modifier.clip(shape).clickable(role = Role.Button, onClick = onClick)
+    } else {
+        Modifier
+    }
+    GlassCard(modifier = Modifier.fillMaxWidth().then(clickModifier)) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = colors.textPrimary,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = colors.textPrimary,
+                    modifier = Modifier.weight(1f),
+                )
+                if (onClick != null) {
+                    Text(
+                        text = stringResource(R.string.sources_open) + " ›",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = colors.strain,
+                    )
+                }
+            }
             Text(
                 text = text,
                 style = MaterialTheme.typography.bodyMedium,

@@ -55,10 +55,95 @@
     <string name="settings_profile">Профиль</string>
     <string name="settings_profile_stub">Возраст, пол, рост и максимальный пульс — появится вместе с расчётом метрик.</string>
     <string name="settings_sources">Источники данных</string>
-    <string name="settings_sources_stub">Подключение Health Connect и список доступных данных — следующий этап.</string>
     <string name="settings_disclaimer">Важно</string>
     <string name="settings_disclaimer_text">Pulse — не медицинское устройство. Все показатели, включая биологический возраст, — приблизительные оценки образа жизни. Они не предназначены для диагностики и лечения и не заменяют консультацию врача.</string>
     <string name="settings_privacy">Приватность</string>
     <string name="settings_privacy_text">Приложение не выходит в интернет. Ваши данные не покидают телефон.</string>
     <string name="settings_version">Версия %1$s</string>
+
+    <!-- Источники данных (Health Connect) -->
+    <string name="sources_title">Источники данных</string>
+    <string name="sources_open">Открыть</string>
+    <string name="sources_settings_connected">Health Connect подключён: доступно %1$d из %2$d видов данных.</string>
+    <string name="sources_settings_not_connected">Health Connect не подключён. Нажмите, чтобы настроить.</string>
+    <string name="sources_intro_title">Откуда Pulse берёт данные</string>
+    <string name="sources_intro_text">Pulse сам ничего не измеряет. Он читает данные, которые ваши часы или браслет записывают в Health Connect — общее хранилище данных о здоровье на телефоне. Pulse только читает, ничего не меняет и никуда не отправляет.</string>
+    <string name="sources_checking">Проверяю Health Connect…</string>
+
+    <string name="hc_not_installed_title">Health Connect не установлен</string>
+    <string name="hc_not_installed_text">На этом телефоне нет приложения Health Connect. Установите его из Google Play, затем вернитесь сюда.</string>
+    <string name="hc_update_title">Health Connect нужно обновить</string>
+    <string name="hc_update_text">Установленная версия Health Connect устарела. Обновите её в Google Play, затем вернитесь сюда.</string>
+    <string name="hc_install_button">Открыть Google Play</string>
+    <string name="hc_no_store">Не удалось открыть Google Play. Найдите «Health Connect» в магазине приложений вручную.</string>
+
+    <string name="hc_connect_title">Нужен доступ к данным</string>
+    <string name="hc_connect_text">Ниже перечислено, какие данные нужны и зачем. После нажатия кнопки откроется системное окно Health Connect — включите в нём нужные переключатели (лучше все) и нажмите «Разрешить».</string>
+    <string name="hc_connect_button">Разрешить доступ</string>
+    <string name="hc_partial_title">Доступ выдан частично</string>
+    <string name="hc_partial_text">Разрешено %1$d из %2$d видов данных. Чем больше данных, тем точнее показатели. Без недостающих метрики посчитаются с пометкой «низкая точность».</string>
+    <string name="hc_partial_button">Разрешить остальное</string>
+    <string name="hc_all_title">Всё подключено</string>
+    <string name="hc_all_text">Pulse может читать все нужные виды данных. Ниже видно, какие из них реально записывают ваши устройства.</string>
+    <string name="hc_manage_button">Открыть Health Connect</string>
+    <string name="hc_denied_hint">Системное окно не появилось или доступ не выдан? Android перестаёт показывать его после двух отказов. Нажмите «Открыть Health Connect» → «Разрешения приложений» → Pulse и включите доступ там.</string>
+    <string name="hc_no_manage">Не удалось открыть Health Connect. Найдите его в настройках телефона: «Безопасность и конфиденциальность» → «Health Connect».</string>
+
+    <string name="data_list_title">Какие данные и зачем</string>
+    <string name="data_essential">обязательно</string>
+    <string name="data_state_granted">Доступ есть</string>
+    <string name="data_state_not_granted">Нет доступа</string>
+    <string name="data_state_unsupported">Телефон не поддерживает</string>
+    <string name="data_no_records">За 30 дней записей нет — похоже, ваши устройства это не записывают.</string>
+    <string name="data_read_failed">Не удалось прочитать данные.</string>
+    <plurals name="data_records_count">
+        <item quantity="one">%1$s запись за 30 дней</item>
+        <item quantity="few">%1$s записи за 30 дней</item>
+        <item quantity="many">%1$s записей за 30 дней</item>
+        <item quantity="other">%1$s записей за 30 дней</item>
+    </plurals>
+    <string name="data_latest">Последняя: %1$s</string>
+    <string name="data_sources">Источник: %1$s</string>
+
+    <string name="data_sleep">Сон</string>
+    <string name="data_sleep_reason">Основа всего: по сну определяется начало и конец вашего «дня», считается качество сна и восстановление.</string>
+    <string name="data_heart_rate">Пульс</string>
+    <string name="data_heart_rate_reason">По пульсу в течение дня считается нагрузка, по пульсу во сне — пульс покоя.</string>
+    <string name="data_hrv">Вариабельность пульса (ВСР)</string>
+    <string name="data_hrv_reason">Главный показатель восстановления. Без него восстановление считается приблизительно.</string>
+    <string name="data_rhr">Пульс покоя</string>
+    <string name="data_rhr_reason">Участвует в расчёте восстановления и биологического возраста.</string>
+    <string name="data_resp">Частота дыхания</string>
+    <string name="data_resp_reason">Отклонение от обычного уровня — ранний признак усталости или болезни.</string>
+    <string name="data_spo2">Кислород в крови</string>
+    <string name="data_spo2_reason">Дополнительный показатель качества сна.</string>
+    <string name="data_skin_temp">Температура кожи</string>
+    <string name="data_skin_temp_reason">Отклонение от обычной температуры учитывается в восстановлении.</string>
+    <string name="data_exercise">Тренировки</string>
+    <string name="data_exercise_reason">Чтобы считать нагрузку по каждой тренировке отдельно.</string>
+    <string name="data_steps">Шаги</string>
+    <string name="data_steps_reason">Общая активность за день; участвует в биологическом возрасте.</string>
+    <string name="data_active_cal">Активные калории</string>
+    <string name="data_active_cal_reason">Сколько энергии потрачено на движение.</string>
+    <string name="data_total_cal">Все калории</string>
+    <string name="data_total_cal_reason">Общий расход энергии за день.</string>
+    <string name="data_weight">Вес</string>
+    <string name="data_weight_reason">Нужен для биологического возраста.</string>
+    <string name="data_vo2max">VO2 max</string>
+    <string name="data_vo2max_reason">Показатель выносливости; участвует в биологическом возрасте.</string>
+
+    <string name="today_connect_title">Подключите свои данные</string>
+    <string name="today_connect_text">Сейчас на экране демо-цифры. Подключите Health Connect, чтобы Pulse увидел данные ваших часов или браслета.</string>
+    <string name="today_connect_button">Подключить</string>
+
+    <!-- Экран, который Health Connect открывает по ссылке «Политика конфиденциальности» -->
+    <string name="rationale_title">Как Pulse использует ваши данные</string>
+    <string name="rationale_text">Pulse читает из Health Connect данные о сне, пульсе, дыхании, активности и весе только для того, чтобы рассчитать показатели восстановления, нагрузки, сна и биологического возраста.
+
+Данные обрабатываются и хранятся только на вашем телефоне. У приложения нет доступа в интернет: оно ничего не отправляет ни разработчику, ни третьим лицам, и не содержит рекламы и аналитики.
+
+Pulse ничего не записывает в Health Connect и не изменяет ваши данные.
+
+Отозвать доступ можно в любой момент: Health Connect → «Разрешения приложений» → Pulse.</string>
+    <string name="rationale_close">Понятно</string>
 </resources>

@@ -31,7 +31,7 @@ Android-приложение, которое читает данные из Heal
 HeartRateRecord, RestingHeartRateRecord, HeartRateVariabilityRmssdRecord,
 SleepSessionRecord (со стадиями), RespiratoryRateRecord, OxygenSaturationRecord,
 SkinTemperatureRecord, StepsRecord, ExerciseSessionRecord,
-ActiveCaloriesBurnedRecord, TotalCaloriesBurnedRecord, WeightRecord.
+ActiveCaloriesBurnedRecord, TotalCaloriesBurnedRecord, WeightRecord, Vo2MaxRecord (для Bio Age).
 - Запрашивать разрешения по-человечески: экран с объяснением, зачем каждое.
 - Если каких-то данных нет (например, источник не пишет HRV) — метрика считается
   по тому, что есть, с пометкой «низкая точность», а не падает.
