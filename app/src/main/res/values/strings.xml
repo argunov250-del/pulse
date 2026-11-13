@@ -29,4 +29,11 @@
     <string name="resp_label">Дыхание</string>
     <string name="resp_unit">вд/мин</string>
     <string name="baseline_value">обычно %1$s</string>
+
+    <string name="bio_age_label">Биологический возраст</string>
+    <string name="bio_age_younger">На %1$s года моложе паспортного (%2$d)</string>
+    <string name="bio_age_older">На %1$s года старше паспортного (%2$d)</string>
+    <string name="bio_age_same">Совпадает с паспортным (%1$d)</string>
+    <string name="bio_age_note">Оценка по сну, пульсу и активности за 30 дней. Обновляется раз в неделю.</string>
+    <string name="bio_age_no_data">Недостаточно данных — нужно около трёх недель наблюдений.</string>
 </resources>

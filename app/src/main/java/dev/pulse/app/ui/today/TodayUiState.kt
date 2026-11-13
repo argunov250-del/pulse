@@ -14,6 +14,13 @@ data class TodayUiState(
     val hrv: VitalUi,
     val restingHeartRate: VitalUi,
     val respiratoryRate: VitalUi,
+    /** Биологический возраст; null — данных пока недостаточно. */
+    val bioAge: BioAgeUi?,
+)
+
+data class BioAgeUi(
+    val bioAgeYears: Float,
+    val chronologicalAgeYears: Int,
 )
 
 /** Один показатель в маленькой карточке: значение и его обычный уровень (baseline). */
@@ -39,5 +46,6 @@ object FakeTodayData {
         hrv = VitalUi(value = 58f, baseline = 52f, decimals = 0, higherIsBetter = true),
         restingHeartRate = VitalUi(value = 54f, baseline = 56f, decimals = 0, higherIsBetter = false),
         respiratoryRate = VitalUi(value = 14.8f, baseline = 15.0f, decimals = 1, higherIsBetter = null),
+        bioAge = BioAgeUi(bioAgeYears = 34.2f, chronologicalAgeYears = 37),
     )
 }

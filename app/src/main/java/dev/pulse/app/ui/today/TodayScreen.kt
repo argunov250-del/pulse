@@ -88,6 +88,7 @@ fun TodayScreen(state: TodayUiState, modifier: Modifier = Modifier) {
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             )
         }
+        BioAgeCard(state.bioAge)
         Spacer(Modifier.height(8.dp))
     }
 }
@@ -371,6 +372,54 @@ private fun VitalCard(
                 color = colors.textSecondary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+@Composable
+private fun BioAgeCard(bioAge: BioAgeUi?) {
+    val colors = PulseTheme.colors
+    GlassCard(modifier = Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+                text = stringResource(R.string.bio_age_label),
+                style = MaterialTheme.typography.titleSmall,
+                color = colors.textPrimary,
+            )
+            if (bioAge == null) {
+                Text(
+                    text = stringResource(R.string.bio_age_no_data),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.textSecondary,
+                )
+                return@Column
+            }
+            val delta = bioAge.bioAgeYears - bioAge.chronologicalAgeYears
+            val deltaText = formatNumber(abs(delta), 1)
+            val (summary, summaryColor) = when {
+                abs(delta) < 0.05f ->
+                    stringResource(R.string.bio_age_same, bioAge.chronologicalAgeYears) to colors.textSecondary
+                delta < 0 ->
+                    stringResource(R.string.bio_age_younger, deltaText, bioAge.chronologicalAgeYears) to colors.recoveryGreen
+                else ->
+                    stringResource(R.string.bio_age_older, deltaText, bioAge.chronologicalAgeYears) to colors.recoveryYellow
+            }
+            Text(
+                text = formatNumber(bioAge.bioAgeYears, 1),
+                fontSize = 40.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = colors.textPrimary,
+            )
+            Text(
+                text = summary,
+                style = MaterialTheme.typography.labelLarge,
+                color = summaryColor,
+            )
+            Text(
+                text = stringResource(R.string.bio_age_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.textSecondary,
             )
         }
     }
