@@ -36,6 +36,8 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onOpenSources: () -> Unit,
     onOpenProfile: () -> Unit,
+    darkTheme: Boolean,
+    onToggleTheme: () -> Unit,
     sourcesSummary: String,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
@@ -78,6 +80,12 @@ fun SettingsScreen(
             onClick = onOpenSources,
         )
         SettingsCard(
+            title = stringResource(R.string.settings_theme),
+            text = stringResource(if (darkTheme) R.string.settings_theme_dark else R.string.settings_theme_light),
+            onClick = onToggleTheme,
+            actionLabel = stringResource(R.string.settings_switch),
+        )
+        SettingsCard(
             title = stringResource(R.string.settings_disclaimer),
             text = stringResource(R.string.settings_disclaimer_text),
         )
@@ -95,7 +103,12 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun SettingsCard(title: String, text: String, onClick: (() -> Unit)? = null) {
+private fun SettingsCard(
+    title: String,
+    text: String,
+    onClick: (() -> Unit)? = null,
+    actionLabel: String = stringResource(R.string.sources_open),
+) {
     val colors = PulseTheme.colors
     val shape = RoundedCornerShape(GlassDefaults.CornerRadius)
     val clickModifier = if (onClick != null) {
@@ -114,7 +127,7 @@ private fun SettingsCard(title: String, text: String, onClick: (() -> Unit)? = n
                 )
                 if (onClick != null) {
                     Text(
-                        text = stringResource(R.string.sources_open) + " ›",
+                        text = "$actionLabel ›",
                         style = MaterialTheme.typography.labelLarge,
                         color = colors.strain,
                     )

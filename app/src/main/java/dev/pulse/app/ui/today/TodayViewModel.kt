@@ -60,7 +60,10 @@ class TodayViewModel @Inject constructor(
                 VitalUi(it.toFloat(), last.respiratoryRateBaseline?.toFloat(), 1, higherIsBetter = null)
             },
             bioAge = output.bioAge?.takeUnless { output.ageUnknown }?.let {
-                BioAgeUi(it.bioAge.toFloat(), output.ageYears.toInt(), it.lowAccuracy)
+                BioAgeUi(
+                    it.bioAge.toFloat(), output.ageYears.toInt(), it.lowAccuracy,
+                    it.contributions.map { (factor, years) -> factor to years.toFloat() },
+                )
             },
             ageUnknown = output.ageUnknown,
         )

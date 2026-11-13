@@ -38,7 +38,8 @@ import dev.pulse.app.ui.trends.TrendsScreen
 import dev.pulse.app.ui.sleep.SleepScreen
 import dev.pulse.app.ui.sources.DataSourcesScreen
 import dev.pulse.app.ui.sources.DataSourcesViewModel
-import dev.pulse.app.ui.stub.StubScreen
+import dev.pulse.app.ui.journal.JournalScreen
+import dev.pulse.app.ui.theme.PulseTheme
 import dev.pulse.app.ui.today.TodayViewModel
 import dev.pulse.app.ui.today.TodayScreen
 
@@ -93,6 +94,8 @@ fun PulseApp() {
                         onBack = back,
                         onOpenSources = { open(Overlay.DATA_SOURCES) },
                         onOpenProfile = { open(Overlay.PROFILE) },
+                        darkTheme = PulseTheme.colors.isDark,
+                        onToggleTheme = sourcesViewModel::toggleTheme,
                         sourcesSummary = if (sources.needsConnection) {
                             stringResource(R.string.sources_settings_not_connected)
                         } else {
@@ -127,7 +130,7 @@ fun PulseApp() {
                         PulseTab.SLEEP -> SleepScreen(contentPadding = padding)
                         PulseTab.STRAIN -> StrainScreen(contentPadding = padding)
                         PulseTab.TRENDS -> TrendsScreen(contentPadding = padding)
-                        PulseTab.JOURNAL -> Stub(R.string.tab_journal, R.string.stub_journal, padding)
+                        PulseTab.JOURNAL -> JournalScreen(contentPadding = padding)
                     }
                 }
             }
@@ -158,13 +161,3 @@ fun PulseApp() {
 
 /** Экраны, которые открываются поверх вкладок. */
 private enum class Overlay { SETTINGS, DATA_SOURCES, PROFILE }
-
-@Composable
-private fun Stub(titleRes: Int, descriptionRes: Int, padding: PaddingValues) {
-    StubScreen(
-        title = stringResource(titleRes),
-        cardTitle = stringResource(R.string.stub_title),
-        description = stringResource(descriptionRes),
-        contentPadding = padding,
-    )
-}

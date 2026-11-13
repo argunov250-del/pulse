@@ -1,5 +1,7 @@
 package dev.pulse.app.ui.today
 
+import dev.pulse.app.algorithms.BioAgeFactor
+
 /** Всё, что показывает экран «Сегодня». */
 data class TodayUiState(
     /** true — данные ненастоящие (демо): в базе пока нет ни одного сна. */
@@ -34,6 +36,8 @@ data class BioAgeUi(
     val bioAgeYears: Float,
     val chronologicalAgeYears: Int,
     val lowAccuracy: Boolean = false,
+    /** Вклад факторов в годах: минус — молодит, плюс — старит. */
+    val contributions: List<Pair<BioAgeFactor, Float>> = emptyList(),
 )
 
 /** Один показатель в маленькой карточке: значение и его обычный уровень (baseline). */

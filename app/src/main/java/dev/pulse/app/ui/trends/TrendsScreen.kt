@@ -29,6 +29,7 @@ import com.patrykandpatrick.vico.compose.cartesian.Zoom
 import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
+import com.patrykandpatrick.vico.compose.cartesian.data.CartesianLayerRangeProvider
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianValueFormatter
 import com.patrykandpatrick.vico.compose.cartesian.data.lineSeries
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
@@ -43,6 +44,8 @@ import dev.pulse.app.ui.components.PulseOutlinedButton
 import dev.pulse.app.ui.glass.GlassCard
 import dev.pulse.app.ui.theme.PulseTheme
 import java.util.Locale
+import kotlin.math.ceil
+import kotlin.math.floor
 
 /** Экран «Тренды»: графики показателей по циклам за 7, 30 или 90 дней. */
 @Composable
@@ -154,6 +157,19 @@ private fun TrendChart(series: TrendSeries, color: Color) {
     val dateFormatter = remember(labels) {
         CartesianValueFormatter { _, value, _ -> labels.getOrNull(value.toInt()) ?: " " }
     }
+    // Диапазон оси Y: у процентов и нагрузки шкала полная, у остальных — вокруг самих значений,
+    // чтобы линия не прижималась к верху из-за пустого места от нуля.
+    val rangeProvider = remember(series.kind, series.min, series.max) {
+        when (series.kind) {
+            TrendKind.RECOVERY -> CartesianLayerRangeProvider.fixed(minY = 0.0, maxY = 100.0)
+            TrendKind.STRAIN -> CartesianLayerRangeProvider.fixed(minY = 0.0, maxY = 21.0)
+            TrendKind.SLEEP_HOURS -> CartesianLayerRangeProvider.fixed(minY = 0.0, maxY = ceil(series.max + 1.0))
+            TrendKind.RESTING_HR, TrendKind.HRV -> CartesianLayerRangeProvider.fixed(
+                minY = floor(series.min / 10.0) * 10.0,
+                maxY = ceil(series.max / 10.0) * 10.0 + if (series.max == series.min) 10.0 else 0.0,
+            )
+        }
+    }
     val theme = remember(color, colors) {
         VicoTheme(
             candlestickCartesianLayerColors = VicoTheme.CandlestickCartesianLayerColors(color, color, color),
@@ -166,7 +182,7 @@ private fun TrendChart(series: TrendSeries, color: Color) {
     ProvideVicoTheme(theme) {
         CartesianChartHost(
             chart = rememberCartesianChart(
-                rememberLineCartesianLayer(),
+                rememberLineCartesianLayer(rangeProvider = rangeProvider),
                 startAxis = VerticalAxis.rememberStart(),
                 bottomAxis = HorizontalAxis.rememberBottom(valueFormatter = dateFormatter, guideline = null),
             ),

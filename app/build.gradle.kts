@@ -54,6 +54,11 @@ android {
     }
 }
 
+// Room сохраняет описание структуры базы в app/schemas — по нему проверяются миграции.
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 kotlin {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_17

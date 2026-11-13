@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.pulse.app.R
+import dev.pulse.app.algorithms.BioAgeFactor
 import dev.pulse.app.algorithms.Config
 import dev.pulse.app.algorithms.RecoveryZone
 import dev.pulse.app.algorithms.recoveryZone
@@ -516,7 +517,41 @@ private fun BioAgeCard(bioAge: BioAgeUi?, ageUnknown: Boolean) {
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.textSecondary,
             )
+            FactorList(R.string.bio_age_younger_title, bioAge.contributions.filter { it.second <= -0.05f }, colors.recoveryGreen)
+            FactorList(R.string.bio_age_older_title, bioAge.contributions.filter { it.second >= 0.05f }, colors.recoveryYellow)
         }
+    }
+}
+
+/** Список факторов биологического возраста одного знака («молодит» или «старит»). */
+@Composable
+private fun FactorList(titleRes: Int, factors: List<Pair<BioAgeFactor, Float>>, color: androidx.compose.ui.graphics.Color) {
+    if (factors.isEmpty()) return
+    Text(
+        text = stringResource(titleRes),
+        style = MaterialTheme.typography.labelLarge,
+        color = color,
+        modifier = Modifier.padding(top = 4.dp),
+    )
+    factors.sortedByDescending { abs(it.second) }.forEach { (factor, years) ->
+        val name = stringResource(
+            when (factor) {
+                BioAgeFactor.SLEEP_DURATION -> R.string.factor_sleep_duration
+                BioAgeFactor.SLEEP_CONSISTENCY -> R.string.factor_sleep_consistency
+                BioAgeFactor.RESTING_HR -> R.string.factor_resting_hr
+                BioAgeFactor.HRV -> R.string.factor_hrv
+                BioAgeFactor.STEPS -> R.string.factor_steps
+                BioAgeFactor.STRAIN -> R.string.factor_strain
+                BioAgeFactor.VO2_MAX -> R.string.factor_vo2
+                BioAgeFactor.BMI -> R.string.factor_bmi
+            },
+        )
+        val sign = if (years > 0) "+" else "−"
+        Text(
+            text = stringResource(R.string.bio_age_factor_line, name, sign + formatNumber(abs(years), 1)),
+            style = MaterialTheme.typography.bodySmall,
+            color = PulseTheme.colors.textPrimary,
+        )
     }
 }
 
