@@ -141,6 +141,20 @@ interface HealthDao {
     @Query("SELECT * FROM sleep_stages WHERE sessionId = :sessionId ORDER BY startTime")
     suspend fun sleepStages(sessionId: Long): List<SleepStageEntity>
 
+    // ---- Журнал ----
+
+    @Query("SELECT * FROM journal_entries")
+    fun observeJournal(): Flow<List<JournalEntryEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertJournal(items: List<JournalEntryEntity>)
+
+    @Query("DELETE FROM journal_entries WHERE cycleStart = :cycleStart AND tag = :tag")
+    suspend fun deleteJournal(cycleStart: Long, tag: String)
+
+    @Query("DELETE FROM journal_entries WHERE cycleStart = :cycleStart AND tag != :keepTag")
+    suspend fun clearJournalTags(cycleStart: Long, keepTag: String)
+
     // ---- Чтение для расчёта метрик ----
 
     /** Пульс по минутам; если минуту записали два источника — берётся общее среднее. */

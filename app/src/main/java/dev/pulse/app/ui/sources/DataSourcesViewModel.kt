@@ -8,6 +8,7 @@ import dev.pulse.app.data.health.HealthConnectRepository
 import dev.pulse.app.data.health.HealthConnectStatus
 import dev.pulse.app.data.health.HealthConnectSyncer
 import dev.pulse.app.data.health.SyncState
+import dev.pulse.app.data.settings.ThemeSettings
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,7 +42,11 @@ data class DataSourcesUiState(
 class DataSourcesViewModel @Inject constructor(
     private val repository: HealthConnectRepository,
     private val syncer: HealthConnectSyncer,
+    private val themeSettings: ThemeSettings,
 ) : ViewModel() {
+
+    fun toggleTheme() = themeSettings.toggle()
+
 
     private val _state = MutableStateFlow(DataSourcesUiState())
     val state: StateFlow<DataSourcesUiState> = _state.asStateFlow()

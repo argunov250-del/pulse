@@ -98,3 +98,17 @@ data class AppMetaEntity(
     @PrimaryKey val key: String,
     val value: String,
 )
+
+/**
+ * Отметка в журнале: в цикле, начавшемся в [cycleStart], было [tag] (кофеин, алкоголь…).
+ * Особая метка [JournalEntryEntity.LOGGED] означает «журнал за этот цикл заполнен».
+ */
+@Entity(tableName = "journal_entries", primaryKeys = ["cycleStart", "tag"])
+data class JournalEntryEntity(
+    val cycleStart: Long,
+    val tag: String,
+) {
+    companion object {
+        const val LOGGED = "LOGGED"
+    }
+}
