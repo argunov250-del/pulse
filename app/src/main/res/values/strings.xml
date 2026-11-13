@@ -20,7 +20,7 @@
     <string name="strain_of_max">из %1$s</string>
     <string name="sleep_label">Сон</string>
     <string name="sleep_of_need">%1$s из %2$s</string>
-    <string name="duration_h_m">%1$d ч %2$d мин</string>
+    <string name="duration_h_m">%1$d ч %2$d м</string>
 
     <string name="hrv_label">ВСР</string>
     <string name="hrv_unit">мс</string>
@@ -36,4 +36,29 @@
     <string name="bio_age_same">Совпадает с паспортным (%1$d)</string>
     <string name="bio_age_note">Оценка по сну, пульсу и активности за 30 дней. Обновляется раз в неделю.</string>
     <string name="bio_age_no_data">Недостаточно данных — нужно около трёх недель наблюдений.</string>
+
+    <!-- Нижнее меню и остальные экраны -->
+    <string name="tab_today">Сегодня</string>
+    <string name="tab_sleep">Сон</string>
+    <string name="tab_strain">Нагрузка</string>
+    <string name="tab_trends">Тренды</string>
+    <string name="tab_journal">Журнал</string>
+    <string name="settings_title">Настройки</string>
+    <string name="back">Назад</string>
+
+    <string name="stub_title">Скоро здесь</string>
+    <string name="stub_sleep">Длительность и стадии сна, эффективность, потребность во сне и постоянство режима.</string>
+    <string name="stub_strain">Нагрузка за цикл и по каждой тренировке, пульсовые зоны и цель на день.</string>
+    <string name="stub_trends">Графики за 7, 30 и 90 дней: ВСР, пульс покоя, восстановление, нагрузка и сон.</string>
+    <string name="stub_journal">Отметки о кофеине, алкоголе, поздней еде и стрессе — и как они влияют на восстановление.</string>
+
+    <string name="settings_profile">Профиль</string>
+    <string name="settings_profile_stub">Возраст, пол, рост и максимальный пульс — появится вместе с расчётом метрик.</string>
+    <string name="settings_sources">Источники данных</string>
+    <string name="settings_sources_stub">Подключение Health Connect и список доступных данных — следующий этап.</string>
+    <string name="settings_disclaimer">Важно</string>
+    <string name="settings_disclaimer_text">Pulse — не медицинское устройство. Все показатели, включая биологический возраст, — приблизительные оценки образа жизни. Они не предназначены для диагностики и лечения и не заменяют консультацию врача.</string>
+    <string name="settings_privacy">Приватность</string>
+    <string name="settings_privacy_text">Приложение не выходит в интернет. Ваши данные не покидают телефон.</string>
+    <string name="settings_version">Версия %1$s</string>
 </resources>
