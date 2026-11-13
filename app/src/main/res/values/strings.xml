@@ -1,4 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Pulse</string>
+
+    <!-- Экран «Сегодня» -->
+    <string name="today_title">Сегодня</string>
+    <string name="today_cycle_started">Цикл начался в %1$s</string>
+    <string name="demo_badge">Демо-данные</string>
+
+    <string name="recovery_label">Восстановление</string>
+    <string name="recovery_zone_green">Зелёная зона</string>
+    <string name="recovery_zone_yellow">Жёлтая зона</string>
+    <string name="recovery_zone_red">Красная зона</string>
+    <string name="recovery_hint_green">Организм восстановился — можно нагружаться.</string>
+    <string name="recovery_hint_yellow">Восстановление среднее — умеренная нагрузка.</string>
+    <string name="recovery_hint_red">Организму нужен отдых — берегите силы.</string>
+    <string name="strain_target">Цель по нагрузке: %1$s–%2$s</string>
+
+    <string name="strain_label">Нагрузка</string>
+    <string name="strain_of_max">из %1$s</string>
+    <string name="sleep_label">Сон</string>
+    <string name="sleep_of_need">%1$s из %2$s</string>
+    <string name="duration_h_m">%1$d ч %2$d мин</string>
+
+    <string name="hrv_label">ВСР</string>
+    <string name="hrv_unit">мс</string>
+    <string name="rhr_label">Пульс покоя</string>
+    <string name="rhr_unit">уд/мин</string>
+    <string name="resp_label">Дыхание</string>
+    <string name="resp_unit">вд/мин</string>
+    <string name="baseline_value">обычно %1$s</string>
+
+    <string name="bio_age_label">Биологический возраст</string>
+    <string name="bio_age_younger">На %1$s года моложе паспортного (%2$d)</string>
+    <string name="bio_age_older">На %1$s года старше паспортного (%2$d)</string>
+    <string name="bio_age_same">Совпадает с паспортным (%1$d)</string>
+    <string name="bio_age_note">Оценка по сну, пульсу и активности за 30 дней. Обновляется раз в неделю.</string>
+    <string name="bio_age_no_data">Недостаточно данных — нужно около трёх недель наблюдений.</string>
 </resources>
