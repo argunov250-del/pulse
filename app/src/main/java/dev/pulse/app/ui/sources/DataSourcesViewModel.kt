@@ -9,6 +9,7 @@ import dev.pulse.app.data.health.HealthConnectStatus
 import dev.pulse.app.data.health.HealthConnectSyncer
 import dev.pulse.app.data.health.SyncState
 import dev.pulse.app.data.settings.ThemeSettings
+import dev.pulse.app.notify.RecoveryNotifier
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,9 +44,13 @@ class DataSourcesViewModel @Inject constructor(
     private val repository: HealthConnectRepository,
     private val syncer: HealthConnectSyncer,
     private val themeSettings: ThemeSettings,
+    private val notifier: RecoveryNotifier,
 ) : ViewModel() {
 
     fun toggleTheme() = themeSettings.toggle()
+
+    val notificationsEnabled get() = notifier.enabled
+    fun setNotifications(enabled: Boolean) = notifier.setEnabled(enabled)
 
 
     private val _state = MutableStateFlow(DataSourcesUiState())

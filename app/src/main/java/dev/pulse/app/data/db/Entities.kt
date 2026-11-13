@@ -9,6 +9,9 @@ import androidx.room.PrimaryKey
 object DataOrigin {
     const val HEALTH_CONNECT = 1
     const val APPLE_IMPORT = 2
+
+    /** Добавлено человеком вручную в самом Pulse. */
+    const val MANUAL = 3
 }
 
 /**

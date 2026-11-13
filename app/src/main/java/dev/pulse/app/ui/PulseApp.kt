@@ -1,6 +1,10 @@
 package dev.pulse.app.ui
 
+import android.Manifest
+import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -63,6 +67,13 @@ fun PulseApp() {
     // (например, после того как человек выдал разрешения в самом Health Connect).
     val sourcesViewModel: DataSourcesViewModel = hiltViewModel()
     val sources by sourcesViewModel.state.collectAsStateWithLifecycle()
+    // Уведомление о восстановлении: включается только после разрешения Android.
+    val notifyEnabled by sourcesViewModel.notificationsEnabled.collectAsStateWithLifecycle()
+    var notifyDenied by rememberSaveable { mutableStateOf(false) }
+    val notifyPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) sourcesViewModel.setNotifications(true) else notifyDenied = true
+    }
+
     // Показатели для экрана «Сегодня»; null — ещё считаются.
     val todayViewModel: TodayViewModel = hiltViewModel()
     val todayState by todayViewModel.state.collectAsStateWithLifecycle()
@@ -94,6 +105,22 @@ fun PulseApp() {
                         onBack = back,
                         onOpenSources = { open(Overlay.DATA_SOURCES) },
                         onOpenProfile = { open(Overlay.PROFILE) },
+                        notifyText = stringResource(
+                            when {
+                                notifyDenied -> R.string.settings_notify_denied
+                                notifyEnabled -> R.string.settings_notify_on
+                                else -> R.string.settings_notify_off
+                            },
+                        ),
+                        onToggleNotify = {
+                            notifyDenied = false
+                            when {
+                                notifyEnabled -> sourcesViewModel.setNotifications(false)
+                                // До Android 13 разрешение на уведомления не спрашивают.
+                                Build.VERSION.SDK_INT < 33 -> sourcesViewModel.setNotifications(true)
+                                else -> notifyPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                        },
                         darkTheme = PulseTheme.colors.isDark,
                         onToggleTheme = sourcesViewModel::toggleTheme,
                         sourcesSummary = if (sources.needsConnection) {

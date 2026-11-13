@@ -36,6 +36,8 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onOpenSources: () -> Unit,
     onOpenProfile: () -> Unit,
+    notifyText: String,
+    onToggleNotify: () -> Unit,
     darkTheme: Boolean,
     onToggleTheme: () -> Unit,
     sourcesSummary: String,
@@ -78,6 +80,12 @@ fun SettingsScreen(
             title = stringResource(R.string.settings_sources),
             text = sourcesSummary,
             onClick = onOpenSources,
+        )
+        SettingsCard(
+            title = stringResource(R.string.settings_notify),
+            text = notifyText,
+            onClick = onToggleNotify,
+            actionLabel = stringResource(R.string.settings_switch),
         )
         SettingsCard(
             title = stringResource(R.string.settings_theme),

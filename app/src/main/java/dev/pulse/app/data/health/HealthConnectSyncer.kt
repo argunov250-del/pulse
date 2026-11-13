@@ -297,6 +297,8 @@ class HealthConnectSyncer @Inject constructor(
             for (record in page) {
                 val start = record.startTime.toEpochMilli()
                 if (start < fromMs) continue
+                // Тренировки, которые Pulse сам записал в Health Connect, уже есть в базе.
+                if (record.metadata.dataOrigin.packageName == repository.ownPackageName) continue
                 rows += WorkoutEntity(
                     startTime = start,
                     endTime = record.endTime.toEpochMilli(),

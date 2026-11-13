@@ -75,6 +75,8 @@ dependencies {
     implementation(libs.haze.blur)
     // Vico — графики.
     implementation(libs.vico.compose)
+    // Glance — виджет на главный экран телефона.
+    implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
 

@@ -11,6 +11,7 @@ import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dev.pulse.app.data.health.HealthConnectSyncer
+import dev.pulse.app.data.metrics.MetricsRepository
 import java.util.concurrent.TimeUnit
 
 /**
@@ -22,10 +23,13 @@ class SyncWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
     private val syncer: HealthConnectSyncer,
+    private val metrics: MetricsRepository,
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result = try {
         syncer.sync()
+        // Пересчитываем показатели: обновится виджет и, если начался новый цикл, придёт уведомление.
+        metrics.computeNow()
         Result.success()
     } catch (e: Exception) {
         // Например, нет разрешения читать в фоне. Не страшно: данные обновятся при открытии приложения.
