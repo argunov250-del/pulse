@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -27,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,22 +37,28 @@ import dev.pulse.app.algorithms.recoveryZone
 import dev.pulse.app.algorithms.strainTarget
 import dev.pulse.app.ui.components.MetricRing
 import dev.pulse.app.ui.glass.GlassCard
+import dev.pulse.app.ui.glass.GlassIconButton
 import dev.pulse.app.ui.theme.PulseTheme
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @Composable
-fun TodayScreen(state: TodayUiState, modifier: Modifier = Modifier) {
+fun TodayScreen(
+    state: TodayUiState,
+    onOpenSettings: () -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .safeDrawingPadding()
+            .padding(contentPadding)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Header(state)
+        Header(state, onOpenSettings)
         RecoveryCard(state)
         Row(
             modifier = Modifier
@@ -94,7 +100,7 @@ fun TodayScreen(state: TodayUiState, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun Header(state: TodayUiState) {
+private fun Header(state: TodayUiState, onOpenSettings: () -> Unit) {
     val colors = PulseTheme.colors
     Row(
         modifier = Modifier
@@ -126,7 +132,13 @@ private fun Header(state: TodayUiState) {
                     color = colors.textSecondary,
                 )
             }
+            Spacer(Modifier.width(8.dp))
         }
+        GlassIconButton(
+            iconRes = R.drawable.ic_settings,
+            contentDescription = stringResource(R.string.settings_title),
+            onClick = onOpenSettings,
+        )
     }
 }
 
@@ -307,6 +319,7 @@ private fun RingCard(
                 text = caption,
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.textSecondary,
+                textAlign = TextAlign.Center,
                 maxLines = 2,
             )
         }
