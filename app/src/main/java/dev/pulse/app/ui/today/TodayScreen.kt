@@ -307,6 +307,8 @@ private fun StrainCard(state: TodayUiState, modifier: Modifier = Modifier) {
         title = stringResource(R.string.strain_label),
         caption = if (state.strain == null) {
             stringResource(R.string.strain_no_data)
+        } else if (state.strainLowAccuracy) {
+            stringResource(R.string.strain_low_data)
         } else {
             stringResource(R.string.strain_of_max, Config.STRAIN_MAX.roundToInt().toString())
         },

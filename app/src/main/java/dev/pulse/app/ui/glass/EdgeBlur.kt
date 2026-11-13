@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.HazeInput
@@ -44,6 +46,16 @@ fun EdgeBlur(
                     endIntensity = if (strongAtTop) 0f else 1f,
                 ),
             )
+            // Вся полоса (и размытие, и затемнение) плавно сходит на нет — без видимой границы.
+            mask(
+                Brush.verticalGradient(
+                    if (strongAtTop) {
+                        listOf(Color.Black, Color.Black.copy(alpha = 0.7f), Color.Transparent)
+                    } else {
+                        listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f), Color.Black)
+                    },
+                ),
+            )
         }
     }
     Box(
@@ -56,5 +68,5 @@ fun EdgeBlur(
 
 object EdgeBlurDefaults {
     val BlurRadius = 20.dp
-    const val TINT_ALPHA = 0.35f
+    const val TINT_ALPHA = 0.25f
 }

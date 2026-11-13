@@ -6,6 +6,7 @@ import dev.pulse.app.algorithms.BioAgeCalculator
 import dev.pulse.app.algorithms.BioAgeInputs
 import dev.pulse.app.algorithms.BioAgeResult
 import dev.pulse.app.algorithms.Config
+import dev.pulse.app.algorithms.HrInterval
 import dev.pulse.app.algorithms.RecoveryCalculator
 import dev.pulse.app.algorithms.RecoveryFactors
 import dev.pulse.app.algorithms.RecoveryResult
@@ -32,6 +33,32 @@ class HeartRateSeries(private val minutes: LongArray, private val bpm: FloatArra
         val from = lowerBound(Math.floorDiv(fromMs, 60_000L))
         val to = lowerBound(Math.floorDiv(toMs + 59_999L, 60_000L))
         return (from until to).map { bpm[it].toDouble() }
+    }
+
+    /**
+     * Пульс за отрезок вместе с тем, сколько минут «действует» каждое измерение:
+     * до следующего измерения, но не дольше [maxGapMinutes].
+     */
+    fun intervalsBetween(fromMs: Long, toMs: Long, maxGapMinutes: Int): List<HrInterval> {
+        val from = lowerBound(Math.floorDiv(fromMs, 60_000L))
+        val to = lowerBound(Math.floorDiv(toMs + 59_999L, 60_000L))
+        val endMinute = Math.floorDiv(toMs + 59_999L, 60_000L)
+        return (from until to).map { i ->
+            val next = if (i + 1 < minutes.size) minutes[i + 1] else Long.MAX_VALUE
+            val gap = (minOf(next, endMinute) - minutes[i]).coerceIn(1L, maxGapMinutes.toLong())
+            HrInterval(bpm[i].toDouble(), gap.toDouble())
+        }
+    }
+
+    /**
+     * Среднее по самым низким значениям за отрезок (нижние 10 %, но не меньше трёх) —
+     * запасной способ оценить пульс покоя, когда пульс записан редко.
+     */
+    fun lowestMean(fromMs: Long, toMs: Long, minPoints: Int = 10): Double? {
+        val values = between(fromMs, toMs)
+        if (values.size < minPoints) return null
+        val lowest = values.sorted().take(maxOf(3, values.size / 10))
+        return lowest.average()
     }
 
     /** Минимум скользящего среднего по [window] минутам подряд — «устойчивый» минимум пульса. */
@@ -110,6 +137,8 @@ data class CycleMetrics(
     val calibrating: Boolean,
     /** Нагрузка за цикл, 0–21; null — нет данных пульса. */
     val strain: Double?,
+    /** true — пульсом покрыта малая часть цикла, нагрузка, скорее всего, занижена. */
+    val strainLowAccuracy: Boolean,
     val sleepPerformance: Double,
     val sleepNeedMinutes: Double,
     val asleepMinutes: Double,
@@ -171,6 +200,7 @@ object MetricsEngine {
             // --- Показатели за основной сон ---
             val (hrv, hrvMethod) = hrvDuring(input, sleep.startMs, sleep.endMs)
             val rhr = input.heartRate.minRollingMean(sleep.startMs, sleep.endMs, Config.RHR_WINDOW_MINUTES)
+                ?: input.heartRate.lowestMean(sleep.startMs, sleep.endMs)
                 ?: mean(input.restingHr, sleep.startMs, sleep.endMs + 12 * 3_600_000L)
             val resp = mean(input.respiratoryRate, sleep.startMs, sleep.endMs)
             val wristTemp = mean(input.wristTemperature, sleep.startMs, sleep.endMs)
@@ -221,21 +251,27 @@ object MetricsEngine {
 
             // --- Нагрузка за цикл ---
             val cycleEnd = cycle.endMs ?: input.nowMs
-            val cycleHr = input.heartRate.between(cycle.startMs, cycleEnd)
+            val cycleHr = input.heartRate.intervalsBetween(cycle.startMs, cycleEnd, Config.STRAIN_MAX_GAP_MINUTES)
             val strain = if (cycleHr.isEmpty()) {
                 null
             } else {
-                StrainCalculator.strain(
-                    cycleHr, restingHr = rhr ?: rhrBaseline?.median ?: Config.DEFAULT_RHR, hrMax = hrMax,
-                    female = profile.female,
+                StrainCalculator.strainFromTrimp(
+                    StrainCalculator.trimpWeighted(
+                        cycleHr, restingHr = rhr ?: rhrBaseline?.median ?: Config.DEFAULT_RHR, hrMax = hrMax,
+                        female = profile.female,
+                    ),
                 )
             }
+            // Какая доля цикла покрыта измерениями пульса.
+            val cycleMinutes = ((cycleEnd - cycle.startMs) / 60_000.0).coerceAtLeast(1.0)
+            val coverage = (cycleHr.sumOf { it.minutes } / cycleMinutes).coerceIn(0.0, 1.0)
 
             results += CycleMetrics(
                 cycle = cycle,
                 recovery = recovery,
                 calibrating = calibrating,
                 strain = strain,
+                strainLowAccuracy = strain != null && coverage < Config.STRAIN_MIN_COVERAGE,
                 sleepPerformance = performance,
                 sleepNeedMinutes = need,
                 asleepMinutes = asleepMinutes,

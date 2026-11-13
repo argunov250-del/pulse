@@ -52,7 +52,7 @@
     <string name="stub_journal">Отметки о кофеине, алкоголе, поздней еде и стрессе — и как они влияют на восстановление.</string>
 
     <string name="settings_profile">Профиль</string>
-    <string name="settings_profile_stub">Возраст, пол, рост и максимальный пульс — появится вместе с расчётом метрик.</string>
+    <string name="settings_profile_stub">Возраст, пол и рост сейчас берутся из архива Apple Health. Ввод вручную появится в следующем обновлении.</string>
     <string name="settings_sources">Источники данных</string>
     <string name="settings_disclaimer">Важно</string>
     <string name="settings_disclaimer_text">Pulse — не медицинское устройство. Все показатели, включая биологический возраст, — приблизительные оценки образа жизни. Они не предназначены для диагностики и лечения и не заменяют консультацию врача.</string>
@@ -214,12 +214,13 @@ Pulse ничего не записывает в Health Connect и не изме�
     <!-- Экран «Сегодня» на настоящих данных -->
     <string name="today_last_cycle">Последний цикл: с %1$s</string>
     <string name="today_stale_title">Свежего сна пока нет</string>
-    <string name="today_stale_text">Показаны данные последнего известного цикла. Откройте приложение ваших часов, чтобы оно передало новый сон, — Pulse подхватит его при синхронизации.</string>
+    <string name="today_stale_text">Показаны данные последнего известного цикла. Новый сон появится, когда его передаст Health Connect или когда вы загрузите свежий архив Apple Health (Настройки → Источники данных).</string>
     <string name="recovery_zone_unknown">Нет данных</string>
     <string name="recovery_hint_unknown">Для расчёта нужен хотя бы пульс во сне.</string>
     <string name="accuracy_calibrating">Калибровка: значение приблизительное</string>
     <string name="accuracy_low">Низкая точность: не хватает части данных</string>
     <string name="strain_no_data">нет данных пульса</string>
+    <string name="strain_low_data">мало данных пульса — занижена</string>
     <string name="hrv_unit_sdnn">мс · SDNN</string>
     <string name="vital_no_data">нет данных</string>
     <string name="vital_calibrating">калибровка</string>
