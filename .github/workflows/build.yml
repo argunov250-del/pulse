@@ -24,6 +24,8 @@ jobs:
     timeout-minutes: 30
     env:
       BUILD_NUMBER: ${{ github.run_number }}
+      # Названия тестов написаны по-русски — отчётам нужна кодировка UTF-8.
+      LC_ALL: C.UTF-8
     steps:
       - name: Скачать код
         uses: actions/checkout@v4
