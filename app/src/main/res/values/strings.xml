@@ -146,4 +146,30 @@ Pulse ничего не записывает в Health Connect и не изме�
 
 Отозвать доступ можно в любой момент: Health Connect → «Разрешения приложений» → Pulse.</string>
     <string name="rationale_close">Понятно</string>
+
+    <!-- Импорт из Apple Health -->
+    <string name="apple_title">Импорт из Apple Health</string>
+    <string name="apple_text">Если раньше вы пользовались iPhone или Apple Watch, сюда можно загрузить всю историю. На iPhone: «Здоровье» → фото профиля → «Экспортировать медданные». Получившийся файл export.zip перенесите на этот телефон и выберите его здесь.</string>
+    <string name="apple_local_note">Архив читается прямо на телефоне и никуда не отправляется. Данные сохраняются в Pulse, в Health Connect они не попадают.</string>
+    <string name="apple_pick_button">Выбрать архив (.zip)</string>
+    <string name="apple_repick_button">Загрузить другой архив</string>
+    <string name="apple_running_title">Идёт загрузка…</string>
+    <string name="apple_running_records">Обработано записей: %1$s</string>
+    <string name="apple_running_date">Сейчас: %1$s</string>
+    <string name="apple_running_finishing">Сохраняю сон и тренировки…</string>
+    <string name="apple_running_hint">Большой архив загружается несколько минут. Не закрывайте приложение и не выключайте экран — он не погаснет сам, пока идёт загрузка.</string>
+    <string name="apple_cancel_button">Отменить</string>
+    <string name="apple_done_title">Загрузка завершена</string>
+    <string name="apple_stored_title">Загружено из Apple Health</string>
+    <string name="apple_stored_range">Период: %1$s — %2$s</string>
+    <string name="apple_stored_hr">Пульс: %1$s минут с измерениями</string>
+    <string name="apple_stored_sleep">Сон: %1$s сессий</string>
+    <string name="apple_stored_measurements">Измерения (ВСР, пульс покоя, дыхание, вес и др.): %1$s</string>
+    <string name="apple_stored_workouts">Тренировки: %1$s</string>
+    <string name="apple_stored_steps">Шаги: %1$s часов с данными</string>
+    <string name="apple_hrv_note">Apple измеряет вариабельность пульса другим методом (SDNN), чем большинство Android-устройств (RMSSD). Pulse хранит их раздельно и не смешивает.</string>
+    <string name="apple_fail_not_archive">Это не похоже на архив Apple Health: внутри не нашлось файла export.xml с записями. Нужен именно файл export.zip, который создаёт приложение «Здоровье» на iPhone.</string>
+    <string name="apple_fail_open">Не удалось открыть файл. Попробуйте выбрать его ещё раз.</string>
+    <string name="apple_fail_cancelled">Загрузка отменена. Данные не сохранены.</string>
+    <string name="apple_fail_other">Не удалось загрузить архив. Пришлите разработчику этот текст:</string>
 </resources>

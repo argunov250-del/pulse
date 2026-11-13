@@ -63,5 +63,10 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.viewmodel.compose)
 
+    // Room — база данных на телефоне (кэш данных и рассчитанные метрики).
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
     testImplementation(libs.junit)
 }
