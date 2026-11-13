@@ -1,20 +1,41 @@
 package dev.pulse.app.ui.strain
 
+import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.pulse.app.algorithms.strainTarget
+import dev.pulse.app.data.db.DataOrigin
+import dev.pulse.app.data.db.HealthDao
+import dev.pulse.app.data.db.WorkoutEntity
+import dev.pulse.app.data.health.HealthConnectRepository
 import dev.pulse.app.data.metrics.MetricsRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import javax.inject.Inject
 import kotlin.math.roundToInt
+
+/** Виды тренировок, которые можно добавить вручную. */
+enum class ManualWorkoutKind(val activity: String, val healthConnectType: Int) {
+    RUNNING("Running", ExerciseSessionRecord.EXERCISE_TYPE_RUNNING),
+    WALKING("Walking", ExerciseSessionRecord.EXERCISE_TYPE_WALKING),
+    STRENGTH("TraditionalStrengthTraining", ExerciseSessionRecord.EXERCISE_TYPE_STRENGTH_TRAINING),
+    CYCLING("Cycling", ExerciseSessionRecord.EXERCISE_TYPE_BIKING),
+    OTHER("Other", ExerciseSessionRecord.EXERCISE_TYPE_OTHER_WORKOUT),
+}
+
+enum class AddWorkoutResult { SAVED, SAVED_AND_WRITTEN, SAVED_NOT_WRITTEN }
 
 data class WorkoutUi(
     val activity: String,
@@ -48,8 +69,51 @@ data class StrainUiState(
 
 @HiltViewModel
 class StrainViewModel @Inject constructor(
-    metrics: MetricsRepository,
+    private val metrics: MetricsRepository,
+    private val dao: HealthDao,
+    private val healthConnect: HealthConnectRepository,
 ) : ViewModel() {
+
+    private val _addResult = MutableStateFlow<AddWorkoutResult?>(null)
+    /** Итог последнего добавления тренировки; null — ничего не добавляли. */
+    val addResult: StateFlow<AddWorkoutResult?> = _addResult.asStateFlow()
+
+    val permissionContract get() = healthConnect.permissionRequestContract()
+    val writePermission get() = healthConnect.writeExercisePermission
+
+    suspend fun canWriteToHealthConnect(): Boolean = healthConnect.canWriteExercise()
+
+    /**
+     * Сохраняет тренировку, добавленную вручную.
+     * @param endedMinutesAgo сколько минут назад она закончилась.
+     * @param alsoHealthConnect записать ли её ещё и в Health Connect.
+     */
+    fun addWorkout(kind: ManualWorkoutKind, durationMinutes: Int, endedMinutesAgo: Int, alsoHealthConnect: Boolean) {
+        viewModelScope.launch {
+            val end = System.currentTimeMillis() / 60_000L * 60_000L - endedMinutesAgo * 60_000L
+            val start = end - durationMinutes * 60_000L
+            withContext(Dispatchers.IO) {
+                dao.insertWorkouts(
+                    listOf(
+                        WorkoutEntity(
+                            startTime = start, endTime = end, activity = kind.activity,
+                            origin = DataOrigin.MANUAL, source = "Pulse",
+                        ),
+                    ),
+                )
+            }
+            val written = alsoHealthConnect && healthConnect.canWriteExercise() &&
+                healthConnect.writeWorkout(
+                    Instant.ofEpochMilli(start), Instant.ofEpochMilli(end), kind.healthConnectType, kind.activity,
+                )
+            metrics.refresh()
+            _addResult.value = when {
+                !alsoHealthConnect -> AddWorkoutResult.SAVED
+                written -> AddWorkoutResult.SAVED_AND_WRITTEN
+                else -> AddWorkoutResult.SAVED_NOT_WRITTEN
+            }
+        }
+    }
 
     val state: StateFlow<StrainUiState> = metrics.state.map { m ->
         val cycles = m.output?.cycles.orEmpty()

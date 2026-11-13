@@ -138,6 +138,9 @@ interface HealthDao {
     @Query("SELECT * FROM sleep_sessions ORDER BY startTime")
     fun observeSleepSessions(): Flow<List<SleepSessionEntity>>
 
+    @Query("SELECT * FROM sleep_sessions ORDER BY startTime")
+    suspend fun sleepSessions(): List<SleepSessionEntity>
+
     @Query("SELECT * FROM sleep_stages WHERE sessionId = :sessionId ORDER BY startTime")
     suspend fun sleepStages(sessionId: Long): List<SleepStageEntity>
 

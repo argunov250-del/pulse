@@ -18,8 +18,13 @@
     <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED" />
     <uses-permission android:name="android.permission.health.READ_WEIGHT" />
     <uses-permission android:name="android.permission.health.READ_VO2_MAX" />
+    <!-- Запись в Health Connect тренировок, добавленных в Pulse вручную (по желанию). -->
+    <uses-permission android:name="android.permission.health.WRITE_EXERCISE" />
     <!-- Чтобы обновлять данные, когда приложение закрыто. -->
     <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND" />
+
+    <!-- Уведомление о восстановлении после нового сна (спрашиваем разрешение, только если его включили). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Чтобы видеть, установлен ли Health Connect, и показывать названия приложений-источников. -->
     <queries>
@@ -66,6 +71,19 @@
                 <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
             </intent-filter>
         </activity-alias>
+
+        <!-- Виджет на главный экран телефона. -->
+        <receiver
+            android:name=".widget.PulseWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/pulse_widget_info" />
+        </receiver>
 
         <!-- Фоновые задачи запускаем сами (через Hilt), поэтому автозапуск WorkManager отключён. -->
         <provider

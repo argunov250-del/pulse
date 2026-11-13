@@ -1,6 +1,8 @@
 package dev.pulse.app.ui.strain
 
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,20 +12,28 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -31,8 +41,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.pulse.app.R
 import dev.pulse.app.algorithms.Config
 import dev.pulse.app.ui.components.MetricRing
+import dev.pulse.app.ui.components.PulseButton
+import dev.pulse.app.ui.components.PulseOutlinedButton
 import dev.pulse.app.ui.glass.GlassCard
 import dev.pulse.app.ui.theme.PulseTheme
+import kotlinx.coroutines.launch
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -49,6 +62,7 @@ fun StrainScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .imePadding()
             .verticalScroll(rememberScrollState())
             .padding(contentPadding)
             .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -162,6 +176,8 @@ fun StrainScreen(
             }
         }
 
+        AddWorkoutCard(viewModel)
+
         SectionTitle(stringResource(R.string.strain_history_title))
         GlassCard(modifier = Modifier.fillMaxWidth()) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -203,6 +219,135 @@ fun StrainScreen(
         }
         Hint(stringResource(R.string.strain_explain))
     }
+}
+
+/** Форма «Добавить тренировку»: вид, длительность, давность и запись в Health Connect. */
+@Composable
+private fun AddWorkoutCard(viewModel: StrainViewModel) {
+    val colors = PulseTheme.colors
+    val result by viewModel.addResult.collectAsStateWithLifecycle()
+    var kind by rememberSaveable { mutableStateOf(ManualWorkoutKind.RUNNING) }
+    var duration by rememberSaveable { mutableStateOf("") }
+    var endedAgo by rememberSaveable { mutableStateOf("0") }
+    var alsoHealthConnect by rememberSaveable { mutableStateOf(false) }
+    var durationError by rememberSaveable { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    // Если разрешения на запись ещё нет — спрашиваем его, когда человек включает галочку.
+    val permissionLauncher = rememberLauncherForActivityResult(viewModel.permissionContract) { granted ->
+        alsoHealthConnect = viewModel.writePermission in granted
+    }
+
+    GlassCard(modifier = Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                text = stringResource(R.string.workout_add_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = colors.textPrimary,
+            )
+            Text(
+                text = stringResource(R.string.workout_add_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.textSecondary,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                ManualWorkoutKind.entries.take(3).forEach { item ->
+                    KindButton(activityName(item.activity), item == kind, { kind = item }, Modifier.weight(1f))
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                ManualWorkoutKind.entries.drop(3).forEach { item ->
+                    KindButton(activityName(item.activity), item == kind, { kind = item }, Modifier.weight(1f))
+                }
+            }
+            WorkoutField(
+                label = stringResource(R.string.workout_duration),
+                value = duration,
+                onChange = { duration = it.filter(Char::isDigit).take(3); durationError = false },
+                error = if (durationError) stringResource(R.string.workout_duration_error) else null,
+            )
+            WorkoutField(
+                label = stringResource(R.string.workout_ended_ago),
+                value = endedAgo,
+                onChange = { endedAgo = it.filter(Char::isDigit).take(4) },
+                error = null,
+            )
+            KindButton(
+                text = stringResource(
+                    if (alsoHealthConnect) R.string.workout_hc_on else R.string.workout_hc_off,
+                ),
+                selected = alsoHealthConnect,
+                onClick = {
+                    if (alsoHealthConnect) {
+                        alsoHealthConnect = false
+                    } else {
+                        scope.launch {
+                            if (viewModel.canWriteToHealthConnect()) {
+                                alsoHealthConnect = true
+                            } else {
+                                runCatching { permissionLauncher.launch(setOf(viewModel.writePermission)) }
+                            }
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            PulseButton(
+                text = stringResource(R.string.workout_save),
+                onClick = {
+                    val minutes = duration.toIntOrNull()
+                    if (minutes == null || minutes !in 1..600) {
+                        durationError = true
+                    } else {
+                        viewModel.addWorkout(kind, minutes, endedAgo.toIntOrNull() ?: 0, alsoHealthConnect)
+                        duration = ""
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            result?.let {
+                Text(
+                    text = stringResource(
+                        when (it) {
+                            AddWorkoutResult.SAVED -> R.string.workout_saved
+                            AddWorkoutResult.SAVED_AND_WRITTEN -> R.string.workout_saved_written
+                            AddWorkoutResult.SAVED_NOT_WRITTEN -> R.string.workout_saved_not_written
+                        },
+                    ),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (it == AddWorkoutResult.SAVED_NOT_WRITTEN) colors.recoveryYellow else colors.recoveryGreen,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun KindButton(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier) {
+    if (selected) PulseButton(text, onClick, modifier) else PulseOutlinedButton(text, onClick, modifier)
+}
+
+@Composable
+private fun WorkoutField(label: String, value: String, onChange: (String) -> Unit, error: String?) {
+    val colors = PulseTheme.colors
+    OutlinedTextField(
+        value = value,
+        onValueChange = onChange,
+        label = { Text(label) },
+        singleLine = true,
+        isError = error != null,
+        supportingText = error?.let { { Text(it) } },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        modifier = Modifier.fillMaxWidth(),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedTextColor = colors.textPrimary,
+            unfocusedTextColor = colors.textPrimary,
+            focusedBorderColor = colors.strain,
+            unfocusedBorderColor = colors.glassBorder,
+            focusedLabelColor = colors.strain,
+            unfocusedLabelColor = colors.textSecondary,
+            cursorColor = colors.strain,
+        ),
+    )
 }
 
 @Composable

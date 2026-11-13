@@ -45,6 +45,7 @@ data class MetricsState(
 class MetricsRepository @Inject constructor(
     private val dao: HealthDao,
     private val profiles: ProfileRepository,
+    private val publisher: MetricsPublisher,
     syncer: HealthConnectSyncer,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -57,9 +58,20 @@ class MetricsRepository @Inject constructor(
     ) { sessions, _, _ -> sessions }
         .mapLatest { sessions ->
             val now = System.currentTimeMillis()
-            MetricsState(loading = false, output = compute(sessions, now), computedAtMs = now)
+            val output = compute(sessions, now)
+            publisher.publish(output)
+            MetricsState(loading = false, output = output, computedAtMs = now)
         }
         .stateIn(scope, SharingStarted.WhileSubscribed(5_000), MetricsState())
+
+    /**
+     * Посчитать прямо сейчас, не дожидаясь, пока кто-то откроет экран.
+     * Нужно фоновой задаче: после синхронизации обновить виджет и уведомление.
+     */
+    suspend fun computeNow() {
+        val now = System.currentTimeMillis()
+        publisher.publish(compute(dao.sleepSessions(), now))
+    }
 
     /** Пересчитать сейчас (время идёт — нагрузка текущего цикла растёт). */
     fun refresh() {

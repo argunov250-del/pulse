@@ -62,7 +62,7 @@
     <string name="sources_settings_connected">Health Connect подключён: доступно %1$d из %2$d видов данных.</string>
     <string name="sources_settings_not_connected">Health Connect не подключён. Нажмите, чтобы настроить.</string>
     <string name="sources_intro_title">Откуда Pulse берёт данные</string>
-    <string name="sources_intro_text">Pulse сам ничего не измеряет. Он читает данные, которые ваши часы или браслет записывают в Health Connect — общее хранилище данных о здоровье на телефоне. Pulse только читает, ничего не меняет и никуда не отправляет.</string>
+    <string name="sources_intro_text">Pulse сам ничего не измеряет. Он читает данные, которые ваши часы или браслет записывают в Health Connect — общее хранилище данных о здоровье на телефоне. Pulse читает эти данные и никуда их не отправляет. Записать в Health Connect он может только тренировку, которую вы сами добавили в Pulse и попросили записать.</string>
     <string name="sources_checking">Проверяю Health Connect…</string>
 
     <string name="hc_not_installed_title">Health Connect не установлен</string>
@@ -137,7 +137,7 @@
 
 Данные обрабатываются и хранятся только на вашем телефоне. У приложения нет доступа в интернет: оно ничего не отправляет ни разработчику, ни третьим лицам, и не содержит рекламы и аналитики.
 
-Pulse ничего не записывает в Health Connect и не изменяет ваши данные.
+Pulse не изменяет ваши данные. В Health Connect он записывает только тренировки, которые вы сами добавили в Pulse и попросили записать.
 
 Отозвать доступ можно в любой момент: Health Connect → «Разрешения приложений» → Pulse.</string>
     <string name="rationale_close">Понятно</string>
@@ -307,4 +307,33 @@ Pulse ничего не записывает в Health Connect и не изме�
     <string name="journal_insight_better">лучше на %1$d п.п.</string>
     <string name="journal_insight_same">без заметной разницы</string>
     <string name="journal_insights_note">Это совпадения в ваших данных, а не доказанная причина: на восстановление влияет многое одновременно.</string>
+
+    <!-- Уведомление и виджет -->
+    <string name="settings_notify">Уведомление о восстановлении</string>
+    <string name="settings_notify_on">Включено: когда появится новый сон, Pulse пришлёт восстановление и цель по нагрузке. Нажмите, чтобы выключить.</string>
+    <string name="settings_notify_off">Выключено. Нажмите, чтобы получать восстановление уведомлением после нового сна.</string>
+    <string name="settings_notify_denied">Android не разрешил уведомления. Включите их для Pulse в настройках телефона и нажмите ещё раз.</string>
+    <string name="notify_channel">Восстановление</string>
+    <string name="notify_channel_description">Восстановление после нового основного сна</string>
+    <string name="notify_title">Восстановление %1$d%% — %2$s</string>
+    <string name="notify_text">Цель по нагрузке на этот цикл: %1$s–%2$s</string>
+    <string name="widget_name">Pulse: показатели</string>
+    <string name="widget_description">Восстановление, нагрузка и сон последнего цикла</string>
+    <string name="widget_empty">Откройте Pulse, чтобы появились данные</string>
+    <string name="widget_recovery">Восст.</string>
+    <string name="widget_strain">Нагрузка</string>
+    <string name="widget_sleep">Сон</string>
+
+    <!-- Добавление тренировки вручную -->
+    <string name="workout_add_title">Добавить тренировку</string>
+    <string name="workout_add_hint">Если часы тренировку не записали, добавьте её здесь. Нагрузка посчитается по пульсу за это время, если он есть.</string>
+    <string name="workout_duration">Длительность, минут</string>
+    <string name="workout_duration_error">Укажите длительность от 1 до 600 минут</string>
+    <string name="workout_ended_ago">Закончилась, минут назад (0 — только что)</string>
+    <string name="workout_hc_off">Записать и в Health Connect: нет</string>
+    <string name="workout_hc_on">Записать и в Health Connect: да</string>
+    <string name="workout_save">Сохранить тренировку</string>
+    <string name="workout_saved">Тренировка сохранена в Pulse</string>
+    <string name="workout_saved_written">Тренировка сохранена в Pulse и записана в Health Connect</string>
+    <string name="workout_saved_not_written">Тренировка сохранена в Pulse, но записать её в Health Connect не удалось</string>
 </resources>

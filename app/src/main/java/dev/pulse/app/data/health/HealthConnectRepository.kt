@@ -22,6 +22,7 @@ import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
 import androidx.health.connect.client.records.Vo2MaxRecord
 import androidx.health.connect.client.records.WeightRecord
+import androidx.health.connect.client.records.metadata.Metadata
 import androidx.health.connect.client.aggregate.AggregateMetric
 import androidx.health.connect.client.request.AggregateGroupByDurationRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
@@ -31,6 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.reflect.KClass
@@ -163,6 +165,37 @@ class HealthConnectRepository @Inject constructor(
         is WeightRecord -> record.time
         is Vo2MaxRecord -> record.time
         else -> null
+    }
+
+    // ---- Запись (только тренировки, добавленные в Pulse вручную) ----
+
+    /** Имя нашего приложения в Health Connect — чтобы при синхронизации не читать свои же записи. */
+    val ownPackageName: String get() = context.packageName
+
+    val writeExercisePermission: String = HealthPermission.getWritePermission(ExerciseSessionRecord::class)
+
+    suspend fun canWriteExercise(): Boolean =
+        status() == HealthConnectStatus.AVAILABLE && writeExercisePermission in grantedPermissions()
+
+    /** Записывает тренировку в Health Connect. @return true — получилось. */
+    suspend fun writeWorkout(start: Instant, end: Instant, exerciseType: Int, title: String): Boolean = try {
+        val zone = ZoneId.systemDefault().rules
+        client.insertRecords(
+            listOf(
+                ExerciseSessionRecord(
+                    startTime = start,
+                    startZoneOffset = zone.getOffset(start),
+                    endTime = end,
+                    endZoneOffset = zone.getOffset(end),
+                    exerciseType = exerciseType,
+                    title = title,
+                    metadata = Metadata.manualEntry(),
+                ),
+            ),
+        )
+        true
+    } catch (e: Exception) {
+        false
     }
 
     // ---- Чтение для синхронизации ----
