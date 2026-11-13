@@ -19,7 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.pulse.app.R
+import dev.chrisbanes.haze.hazeSource
 import dev.pulse.app.ui.glass.GlassBackground
+import dev.pulse.app.ui.glass.LocalHazeState
 import dev.pulse.app.ui.navigation.BottomBarSpace
 import dev.pulse.app.ui.navigation.GlassBottomBar
 import dev.pulse.app.ui.navigation.PulseTab
@@ -43,29 +45,38 @@ fun PulseApp() {
 
     GlassBackground {
         // Содержимое не заезжает под строку состояния (часы, батарея).
+        val hazeState = LocalHazeState.current
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding(),
         ) {
-            if (settingsOpen) {
-                SettingsScreen(
-                    onBack = { settingsOpen = false },
-                    contentPadding = PaddingValues(bottom = navBarBottom + 12.dp),
-                )
-            } else {
-                // Внизу оставляем место под меню, чтобы последнюю карточку можно было докрутить.
-                val padding = PaddingValues(bottom = navBarBottom + BottomBarSpace)
-                when (tab) {
-                    PulseTab.TODAY -> TodayScreen(
-                        state = FakeTodayData.state, // Фаза 1: демо-данные.
-                        onOpenSettings = { settingsOpen = true },
-                        contentPadding = padding,
+            // Содержимое экрана — тоже «источник» для размытия: нижнее меню размывает
+            // карточки, которые прокручиваются под ним, и текст сквозь него не просвечивает.
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .then(if (hazeState != null) Modifier.hazeSource(hazeState, zIndex = 1f) else Modifier),
+            ) {
+                if (settingsOpen) {
+                    SettingsScreen(
+                        onBack = { settingsOpen = false },
+                        contentPadding = PaddingValues(bottom = navBarBottom + 12.dp),
                     )
-                    PulseTab.SLEEP -> Stub(R.string.tab_sleep, R.string.stub_sleep, padding)
-                    PulseTab.STRAIN -> Stub(R.string.tab_strain, R.string.stub_strain, padding)
-                    PulseTab.TRENDS -> Stub(R.string.tab_trends, R.string.stub_trends, padding)
-                    PulseTab.JOURNAL -> Stub(R.string.tab_journal, R.string.stub_journal, padding)
+                } else {
+                    // Внизу оставляем место под меню, чтобы последнюю карточку можно было докрутить.
+                    val padding = PaddingValues(bottom = navBarBottom + BottomBarSpace)
+                    when (tab) {
+                        PulseTab.TODAY -> TodayScreen(
+                            state = FakeTodayData.state, // Фаза 1: демо-данные.
+                            onOpenSettings = { settingsOpen = true },
+                            contentPadding = padding,
+                        )
+                        PulseTab.SLEEP -> Stub(R.string.tab_sleep, R.string.stub_sleep, padding)
+                        PulseTab.STRAIN -> Stub(R.string.tab_strain, R.string.stub_strain, padding)
+                        PulseTab.TRENDS -> Stub(R.string.tab_trends, R.string.stub_trends, padding)
+                        PulseTab.JOURNAL -> Stub(R.string.tab_journal, R.string.stub_journal, padding)
+                    }
                 }
             }
             if (!settingsOpen) {
