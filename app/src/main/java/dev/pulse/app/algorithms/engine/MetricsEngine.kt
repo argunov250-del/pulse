@@ -125,8 +125,21 @@ data class EngineInput(
     val hourlySteps: List<Sample> = emptyList(),
     val vo2Max: List<Sample> = emptyList(),
     val weightKg: List<Sample> = emptyList(),
+    /** Тренировки, отсортированные по началу. */
+    val workouts: List<WorkoutInput> = emptyList(),
     val profile: Profile = Profile(),
     val nowMs: Long,
+)
+
+data class WorkoutInput(val startMs: Long, val endMs: Long, val activity: String)
+
+/** Тренировка с посчитанной нагрузкой. */
+data class WorkoutMetrics(
+    val workout: WorkoutInput,
+    /** null — за время тренировки нет пульса. */
+    val strain: Double?,
+    val averageHr: Double?,
+    val maxHr: Double?,
 )
 
 /** Всё, что посчитано для одного цикла. */
@@ -151,11 +164,15 @@ data class CycleMetrics(
     val restingHrBaseline: Double?,
     val respiratoryRate: Double?,
     val respiratoryRateBaseline: Double?,
+    /** Тренировки, начавшиеся в этом цикле, с нагрузкой каждой. */
+    val workouts: List<WorkoutMetrics> = emptyList(),
 )
 
 data class EngineOutput(
     val cycles: List<CycleMetrics>,
     val bioAge: BioAgeResult?,
+    /** Максимальный пульс, с которым считалась нагрузка. */
+    val hrMax: Double,
     /** Паспортный возраст, с которым считали (настоящий или по умолчанию). */
     val ageYears: Double,
     /** true — возраст взят по умолчанию, HRmax и Bio Age неточны. */
@@ -266,6 +283,28 @@ object MetricsEngine {
             val cycleMinutes = ((cycleEnd - cycle.startMs) / 60_000.0).coerceAtLeast(1.0)
             val coverage = (cycleHr.sumOf { it.minutes } / cycleMinutes).coerceIn(0.0, 1.0)
 
+            // --- Тренировки внутри цикла: нагрузка каждой отдельно ---
+            val strainRhr = rhr ?: rhrBaseline?.median ?: Config.DEFAULT_RHR
+            val workouts = input.workouts
+                .filter { it.startMs >= cycle.startMs && it.startMs < cycleEnd && it.endMs > it.startMs }
+                .map { workout ->
+                    val hr = input.heartRate.intervalsBetween(
+                        workout.startMs, workout.endMs, Config.STRAIN_MAX_GAP_MINUTES,
+                    )
+                    WorkoutMetrics(
+                        workout = workout,
+                        strain = if (hr.isEmpty()) {
+                            null
+                        } else {
+                            StrainCalculator.strainFromTrimp(
+                                StrainCalculator.trimpWeighted(hr, strainRhr, hrMax, profile.female),
+                            )
+                        },
+                        averageHr = if (hr.isEmpty()) null else hr.sumOf { it.bpm * it.minutes } / hr.sumOf { it.minutes },
+                        maxHr = hr.maxOfOrNull { it.bpm },
+                    )
+                }
+
             results += CycleMetrics(
                 cycle = cycle,
                 recovery = recovery,
@@ -284,6 +323,7 @@ object MetricsEngine {
                 restingHrBaseline = rhrBaseline?.median,
                 respiratoryRate = resp,
                 respiratoryRateBaseline = respBaseline?.median,
+                workouts = workouts,
             )
 
             // --- Запоминаем значения этого цикла для будущих baseline ---
@@ -301,6 +341,7 @@ object MetricsEngine {
         return EngineOutput(
             cycles = results,
             bioAge = bioAge(input, results, age),
+            hrMax = hrMax,
             ageYears = age,
             ageUnknown = profile.ageYears == null,
         )

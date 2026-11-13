@@ -171,6 +171,27 @@ class MetricsEngineTest {
     }
 
     @Test
+    fun `тренировка получает свою нагрузку, средний и максимальный пульс`() {
+        // В день 30 с 20:00 до 21:00 пульс 160 — это и есть тренировка.
+        val workout = WorkoutInput(30 * day + 20 * hour, 30 * day + 21 * hour, "Running")
+        val out = MetricsEngine.compute(
+            EngineInput(
+                cycles = CycleSegmenter.segment(sleeps(), nowMs),
+                heartRate = heartRate({ 52f }, workoutDay = { it == 30 }),
+                workouts = listOf(workout),
+                profile = Profile(ageYears = 37.0),
+                nowMs = nowMs,
+            ),
+        )
+        val inCycle = out.cycles[30].workouts.single()
+        assertEquals(160.0, inCycle.averageHr!!, 0.01)
+        assertEquals(160.0, inCycle.maxHr!!, 0.01)
+        assertTrue(inCycle.strain!! > 5.0)
+        assertTrue(inCycle.strain!! < out.cycles[30].strain!!)
+        assertTrue(out.cycles[29].workouts.isEmpty())
+    }
+
+    @Test
     fun `после тяжёлого дня потребность во сне выше`() {
         val out = run(heartRate = heartRate({ 52f }, workoutDay = { it == 30 }))
         // Цикл 31 начинается со сна после дня с тренировкой.
