@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,8 +23,11 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.chrisbanes.haze.hazeSource
+import dev.pulse.app.ui.glass.EdgeBlur
 import dev.pulse.app.ui.glass.GlassBackground
 import dev.pulse.app.ui.glass.LocalHazeState
+import dev.pulse.app.ui.navigation.BottomBarHeight
+import dev.pulse.app.ui.navigation.BottomBarMargin
 import dev.pulse.app.ui.navigation.BottomBarSpace
 import dev.pulse.app.ui.navigation.GlassBottomBar
 import dev.pulse.app.ui.navigation.PulseTab
@@ -62,15 +65,13 @@ fun PulseApp() {
     }
 
     val navBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
     GlassBackground {
-        // Содержимое не заезжает под строку состояния (часы, батарея).
+        // Содержимое прокручивается и под строкой состояния, и под нижним меню,
+        // а у краёв экрана плавно размывается (см. EdgeBlur ниже).
         val hazeState = LocalHazeState.current
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding(),
-        ) {
+        Box(modifier = Modifier.fillMaxSize()) {
             // Содержимое экрана — тоже «источник» для размытия: нижнее меню размывает
             // карточки, которые прокручиваются под ним, и текст сквозь него не просвечивает.
             Box(
@@ -78,7 +79,7 @@ fun PulseApp() {
                     .fillMaxSize()
                     .then(if (hazeState != null) Modifier.hazeSource(hazeState, zIndex = 1f) else Modifier),
             ) {
-                val overlayPadding = PaddingValues(bottom = navBarBottom + 12.dp)
+                val overlayPadding = PaddingValues(top = statusBarTop, bottom = navBarBottom + 12.dp)
                 if (overlay == Overlay.SETTINGS) {
                     SettingsScreen(
                         onBack = back,
@@ -103,7 +104,7 @@ fun PulseApp() {
                     )
                 } else {
                     // Внизу оставляем место под меню, чтобы последнюю карточку можно было докрутить.
-                    val padding = PaddingValues(bottom = navBarBottom + BottomBarSpace)
+                    val padding = PaddingValues(top = statusBarTop, bottom = navBarBottom + BottomBarSpace)
                     when (tab) {
                         PulseTab.TODAY -> TodayScreen(
                             state = FakeTodayData.state, // Фаза 1: демо-данные.
@@ -119,13 +120,25 @@ fun PulseApp() {
                     }
                 }
             }
+            // Верх: размытие под часами и значками, сходит на нет чуть ниже строки состояния.
+            EdgeBlur(
+                height = statusBarTop + 16.dp,
+                strongAtTop = true,
+                modifier = Modifier.align(Alignment.TopCenter),
+            )
+            // Низ: размытие начинается от середины меню и усиливается к краю экрана.
+            EdgeBlur(
+                height = if (settingsOpen) navBarBottom + 16.dp else navBarBottom + BottomBarMargin + BottomBarHeight / 2,
+                strongAtTop = false,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
             if (!settingsOpen) {
                 GlassBottomBar(
                     selected = tab,
                     onSelect = { tab = it },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(start = 16.dp, end = 16.dp, bottom = navBarBottom + 10.dp),
+                        .padding(start = 16.dp, end = 16.dp, bottom = navBarBottom + BottomBarMargin),
                 )
             }
         }
