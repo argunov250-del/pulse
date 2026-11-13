@@ -34,6 +34,10 @@ import dev.pulse.app.ui.theme.PulseTheme
 /** Высота меню вместе с отступами — столько места экраны оставляют внизу под него. */
 val BottomBarSpace = 92.dp
 
+/** Примерная высота самого меню и его отступ от низа экрана. */
+val BottomBarHeight = 66.dp
+val BottomBarMargin = 10.dp
+
 /** «Парящее» стеклянное нижнее меню. */
 @Composable
 fun GlassBottomBar(
