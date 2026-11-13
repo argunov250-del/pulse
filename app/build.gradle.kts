@@ -22,9 +22,25 @@ android {
         versionName = "0.0.$buildNumber"
     }
 
+    // Постоянный ключ подписи. Сам ключ в репозитории НЕ хранится: в облачной сборке он
+    // приходит из GitHub Secrets через переменные окружения. Если их нет — собирается
+    // обычная debug-версия с временным ключом.
+    val keystorePath: String? = System.getenv("PULSE_KEYSTORE_FILE")?.takeIf { it.isNotBlank() }
+    signingConfigs {
+        if (keystorePath != null) {
+            create("pulse") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("PULSE_KEYSTORE_PASSWORD")
+                keyAlias = "pulse"
+                keyPassword = System.getenv("PULSE_KEYSTORE_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("pulse")
         }
     }
 

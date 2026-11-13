@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   build:
-    name: Собрать debug-APK
+    name: Собрать APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -59,11 +59,37 @@ jobs:
               -dname "CN=Android Debug,O=Android,C=US"
           fi
 
-      - name: Прогнать тесты и собрать APK
-        run: ./gradlew testDebugUnitTest assembleDebug -PbuildNumber="$BUILD_NUMBER" --stacktrace
+      # Постоянный ключ подписи лежит в GitHub Secrets (в репозитории его нет).
+      # С ним собирается release-версия, и обновления всегда ставятся поверх старой.
+      - name: Достать постоянный ключ подписи из секретов
+        id: signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.PULSE_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/pulse.p12"
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "Постоянный ключ найден: собираем release."
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Секретов нет: собираем debug с временным ключом."
+          fi
 
-      - name: Переименовать APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk "pulse-build-$BUILD_NUMBER.apk"
+      - name: Прогнать тесты и собрать APK (release, постоянный ключ)
+        if: steps.signing.outputs.enabled == 'true'
+        env:
+          PULSE_KEYSTORE_FILE: ${{ runner.temp }}/pulse.p12
+          PULSE_KEYSTORE_PASSWORD: ${{ secrets.PULSE_KEYSTORE_PASSWORD }}
+        run: |
+          ./gradlew testDebugUnitTest assembleRelease -PbuildNumber="$BUILD_NUMBER" --stacktrace
+          cp app/build/outputs/apk/release/app-release.apk "pulse-build-$BUILD_NUMBER.apk"
+          rm -f "$RUNNER_TEMP/pulse.p12"
+
+      - name: Прогнать тесты и собрать APK (debug, временный ключ)
+        if: steps.signing.outputs.enabled != 'true'
+        run: |
+          ./gradlew testDebugUnitTest assembleDebug -PbuildNumber="$BUILD_NUMBER" --stacktrace
+          cp app/build/outputs/apk/debug/app-debug.apk "pulse-build-$BUILD_NUMBER.apk"
 
       - name: Выложить APK как артефакт
         uses: actions/upload-artifact@v4
@@ -80,4 +106,4 @@ jobs:
           gh release create "build-$BUILD_NUMBER" "pulse-build-$BUILD_NUMBER.apk" \
             --target "$GITHUB_SHA" \
             --title "Сборка $BUILD_NUMBER" \
-            --notes "Debug-сборка №$BUILD_NUMBER. Скачайте файл pulse-build-$BUILD_NUMBER.apk ниже (раздел Assets) и откройте его на телефоне."
+            --notes "Сборка №$BUILD_NUMBER. Скачайте файл pulse-build-$BUILD_NUMBER.apk ниже (раздел Assets) и откройте его на телефоне."
