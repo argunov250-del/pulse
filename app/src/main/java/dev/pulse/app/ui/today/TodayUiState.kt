@@ -14,6 +14,8 @@ data class TodayUiState(
     /** true — «обычный уровень» ещё набирается, значения приблизительные. */
     val calibrating: Boolean = false,
     val strain: Float?,
+    /** true — пульса мало, нагрузка, скорее всего, занижена. */
+    val strainLowAccuracy: Boolean = false,
     val sleepPerformancePercent: Int,
     val sleepActualMinutes: Int,
     val sleepNeedMinutes: Int,

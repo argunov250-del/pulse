@@ -127,7 +127,7 @@ fun PulseApp() {
             }
             // Верх: размытие под часами и значками, сходит на нет чуть ниже строки состояния.
             EdgeBlur(
-                height = statusBarTop + 16.dp,
+                height = statusBarTop + 28.dp,
                 strongAtTop = true,
                 modifier = Modifier.align(Alignment.TopCenter),
             )

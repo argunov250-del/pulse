@@ -47,6 +47,7 @@ class TodayViewModel @Inject constructor(
             recoveryLowAccuracy = last.recovery?.lowAccuracy == true,
             calibrating = last.calibrating,
             strain = last.strain?.toFloat(),
+            strainLowAccuracy = last.strainLowAccuracy,
             sleepPerformancePercent = last.sleepPerformance.roundToInt(),
             sleepActualMinutes = last.asleepMinutes.roundToInt(),
             sleepNeedMinutes = last.sleepNeedMinutes.roundToInt(),

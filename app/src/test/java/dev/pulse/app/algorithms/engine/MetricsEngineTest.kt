@@ -144,6 +144,33 @@ class MetricsEngineTest {
     }
 
     @Test
+    fun `пульс раз в 5 минут даёт почти ту же нагрузку и пульс покоя, что и поминутный`() {
+        val dense = heartRate({ 52f }, workoutDay = { it == 30 })
+        val full = run(heartRate = dense).cycles[30]
+        val sparse = run(heartRate = everyNth(dense, 5)).cycles[30]
+        assertEquals(full.strain!!, sparse.strain!!, 0.8)
+        assertEquals(52.0, sparse.restingHr!!, 0.5)
+        assertFalse(sparse.strainLowAccuracy)
+    }
+
+    @Test
+    fun `если пульса совсем мало — нагрузка с пометкой «мало данных»`() {
+        val sparse = run(heartRate = everyNth(heartRate({ 52f }), 60)).cycles[30]
+        assertTrue(sparse.strainLowAccuracy)
+    }
+
+    /** Оставляет каждое n-е измерение — как у часов, которые пишут пульс редко. */
+    private fun everyNth(series: HeartRateSeries, n: Int): HeartRateSeries {
+        val all = series.intervalsBetween(0, Long.MAX_VALUE / 2, 1)
+        val start = 10 * hour / 60_000
+        val keep = all.indices.filter { it % n == 0 }
+        return HeartRateSeries(
+            LongArray(keep.size) { start + keep[it] },
+            FloatArray(keep.size) { all[keep[it]].bpm.toFloat() },
+        )
+    }
+
+    @Test
     fun `после тяжёлого дня потребность во сне выше`() {
         val out = run(heartRate = heartRate({ 52f }, workoutDay = { it == 30 }))
         // Цикл 31 начинается со сна после дня с тренировкой.

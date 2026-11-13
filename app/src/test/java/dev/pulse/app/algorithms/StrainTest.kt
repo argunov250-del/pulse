@@ -27,6 +27,13 @@ class StrainTest {
     }
 
     @Test
+    fun `редкие измерения с длительностью дают ту же нагрузку, что и поминутные`() {
+        val everyMinute = StrainCalculator.trimp(List(60) { 120.0 }, 60.0, 180.0, false)
+        val everyFiveMinutes = StrainCalculator.trimpWeighted(List(12) { HrInterval(120.0, 5.0) }, 60.0, 180.0, false)
+        assertEquals(everyMinute, everyFiveMinutes, 1e-9)
+    }
+
+    @Test
     fun `для женщин другие коэффициенты`() {
         val bpm = List(30) { 150.0 }
         val male = StrainCalculator.trimp(bpm, 60.0, 180.0, female = false)
