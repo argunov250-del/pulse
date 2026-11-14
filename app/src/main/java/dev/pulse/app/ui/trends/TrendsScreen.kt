@@ -13,7 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -28,10 +28,10 @@ import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.Zoom
 import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
-import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
+import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModel
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianLayerRangeProvider
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianValueFormatter
-import com.patrykandpatrick.vico.compose.cartesian.data.lineSeries
+import com.patrykandpatrick.vico.compose.cartesian.data.LineCartesianLayerModel
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoScrollState
@@ -100,7 +100,10 @@ fun TrendsScreen(
             color = colors.textSecondary,
             modifier = Modifier.padding(horizontal = 4.dp),
         )
-        state.series.forEach { series -> TrendCard(series) }
+        state.series.forEach { series ->
+            // Каждый график привязан к своему показателю и периоду: при смене периода он создаётся заново.
+            key(series.kind, state.rangeDays) { TrendCard(series) }
+        }
     }
 }
 
@@ -148,9 +151,10 @@ private data class Spec(val titleRes: Int, val unitRes: Int, val color: Color, v
 @Composable
 private fun TrendChart(series: TrendSeries, color: Color) {
     val colors = PulseTheme.colors
-    val modelProducer = remember { CartesianChartModelProducer() }
-    LaunchedEffect(series.values) {
-        modelProducer.runTransaction { lineSeries { series(series.values) } }
+    // Данные графика строятся сразу, вместе со шкалой: так при смене периода график никогда
+    // не оказывается со старыми точками и новой шкалой (из-за этого приложение вылетало).
+    val model = remember(series.values) {
+        CartesianChartModel(LineCartesianLayerModel.build { series(series.values) })
     }
     // Подписи по оси X — даты циклов (значение оси — номер точки).
     val labels = series.labels
@@ -161,8 +165,8 @@ private fun TrendChart(series: TrendSeries, color: Color) {
     // чтобы линия не прижималась к верху из-за пустого места от нуля.
     val rangeProvider = remember(series.kind, series.min, series.max) {
         when (series.kind) {
-            TrendKind.RECOVERY -> CartesianLayerRangeProvider.fixed(minY = 0.0, maxY = 100.0)
-            TrendKind.STRAIN -> CartesianLayerRangeProvider.fixed(minY = 0.0, maxY = 21.0)
+            TrendKind.RECOVERY -> CartesianLayerRangeProvider.fixed(minY = 0.0, maxY = maxOf(100.0, series.max))
+            TrendKind.STRAIN -> CartesianLayerRangeProvider.fixed(minY = 0.0, maxY = maxOf(21.0, ceil(series.max)))
             TrendKind.SLEEP_HOURS -> CartesianLayerRangeProvider.fixed(minY = 0.0, maxY = ceil(series.max + 1.0))
             TrendKind.RESTING_HR, TrendKind.HRV -> CartesianLayerRangeProvider.fixed(
                 minY = floor(series.min / 10.0) * 10.0,
@@ -186,7 +190,7 @@ private fun TrendChart(series: TrendSeries, color: Color) {
                 startAxis = VerticalAxis.rememberStart(),
                 bottomAxis = HorizontalAxis.rememberBottom(valueFormatter = dateFormatter, guideline = null),
             ),
-            modelProducer = modelProducer,
+            model = model,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(180.dp),

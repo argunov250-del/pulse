@@ -108,11 +108,26 @@ class MetricsRepository @Inject constructor(
                 // Вес и VO2 max меняются редко — берём за всё время.
                 vo2Max = dao.measurementsFrom(MeasurementType.VO2_MAX.ordinal, 0).toSamples(),
                 weightKg = dao.measurementsFrom(MeasurementType.WEIGHT_KG.ordinal, 0).toSamples(),
-                workouts = dao.workoutsFrom(fromMs).map { WorkoutInput(it.startTime, it.endTime, it.activity) },
+                workouts = dao.workoutsFrom(fromMs)
+                    .map { WorkoutInput(it.startTime, it.endTime, it.activity) }
+                    .withoutOverlaps(),
                 profile = profiles.load().toEngineProfile(),
                 nowMs = nowMs,
             ),
         )
+    }
+
+    /**
+     * Одна и та же тренировка может прийти дважды — из архива Apple Health и из Health Connect.
+     * Из пересекающихся по времени оставляем первую.
+     */
+    private fun List<WorkoutInput>.withoutOverlaps(): List<WorkoutInput> {
+        val result = ArrayList<WorkoutInput>()
+        for (workout in sortedBy { it.startMs }) {
+            val last = result.lastOrNull()
+            if (last == null || workout.startMs >= last.endMs) result += workout
+        }
+        return result
     }
 
     private fun List<ValuePoint>.toSamples(): List<Sample> = map { Sample(it.timeMs, it.value) }
