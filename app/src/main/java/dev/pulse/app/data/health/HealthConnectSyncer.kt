@@ -30,7 +30,10 @@ import dev.pulse.app.data.db.WorkoutEntity
 import dev.pulse.app.data.importer.MeasurementType
 import dev.pulse.app.data.importer.TotalType
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -48,6 +51,18 @@ data class SyncState(
     val lastSyncMs: Long? = null,
     /** Сколько видов данных не удалось прочитать в последний раз. */
     val failedTypes: Int = 0,
+    /** Что произошло с каждым видом данных в последний раз: сколько прочитано или какая ошибка. */
+    val steps: List<SyncStep> = emptyList(),
+    /** Ошибка, из-за которой синхронизация оборвалась целиком; null — такого не было. */
+    val error: String? = null,
+)
+
+data class SyncStep(
+    val type: HealthDataType,
+    /** Сколько записей получено из Health Connect. */
+    val count: Int,
+    /** Текст ошибки; null — прочитано успешно. */
+    val error: String?,
 )
 
 /**
@@ -64,6 +79,24 @@ class HealthConnectSyncer @Inject constructor(
     private val dao: HealthDao,
 ) {
     private val mutex = Mutex()
+
+    /** Своя «область» работы: синхронизация не обрывается, когда человек уходит с экрана. */
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    /** Запустить синхронизацию в фоне приложения. [force] = false — только если давно не было. */
+    fun requestSync(force: Boolean) {
+        scope.launch {
+            try {
+                if (force) sync() else syncIfStale()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(running = false, error = describe(e))
+            }
+        }
+    }
+
+    private fun describe(e: Exception): String = "${e.javaClass.simpleName}: ${e.message ?: "без описания"}".take(300)
     private val origin = DataOrigin.HEALTH_CONNECT
 
     private val _state = MutableStateFlow(SyncState())
@@ -104,15 +137,17 @@ class HealthConnectSyncer @Inject constructor(
 
                 var attempted = 0
                 var failed = 0
-                suspend fun step(type: HealthDataType, block: suspend () -> Unit) {
+                val steps = ArrayList<SyncStep>()
+                suspend fun step(type: HealthDataType, block: suspend () -> Int) {
                     if (!has(type)) return
                     attempted++
                     try {
-                        block()
+                        steps += SyncStep(type, block(), null)
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
                         failed++
+                        steps += SyncStep(type, 0, describe(e))
                     }
                 }
 
@@ -204,21 +239,27 @@ class HealthConnectSyncer @Inject constructor(
                 // Не прочиталось вообще ничего (например, в фоне нет доступа) — это не синхронизация:
                 // отметку времени не трогаем, чтобы в следующий раз перечитать тот же отрезок.
                 if (failed == attempted) {
-                    _state.value = _state.value.copy(running = false, failedTypes = failed)
+                    _state.value = _state.value.copy(running = false, failedTypes = failed, steps = steps, error = null)
                     return@withContext false
                 }
 
                 val nowMs = now.toEpochMilli()
                 database.runInTransaction { dao.putMeta(AppMetaEntity(META_LAST_SYNC, nowMs.toString())) }
-                _state.value = SyncState(running = false, lastSyncMs = nowMs, failedTypes = failed)
+                _state.value = SyncState(running = false, lastSyncMs = nowMs, failedTypes = failed, steps = steps)
                 true
             }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // Синхронизация оборвалась целиком — запоминаем причину, чтобы показать её на экране.
+            _state.value = _state.value.copy(running = false, error = describe(e))
+            false
         } finally {
             if (_state.value.running) _state.value = _state.value.copy(running = false)
         }
     }
 
-    private suspend fun syncHeartRate(from: Instant, to: Instant, fromMs: Long) {
+    private suspend fun syncHeartRate(from: Instant, to: Instant, fromMs: Long): Int {
         // minute -> [сумма, количество, минимум, максимум]
         val minutes = HashMap<Long, DoubleArray>()
         repository.readAll(HeartRateRecord::class, from, to) { page ->
@@ -243,14 +284,17 @@ class HealthConnectSyncer @Inject constructor(
             dao.deleteHeartRateFrom(origin, fromMs / MINUTE_MS)
             rows.chunked(5_000).forEach(dao::insertHeartRateAll)
         }
+        return rows.size
     }
 
-    private suspend fun syncSleep(from: Instant, to: Instant, fromMs: Long) {
+    private suspend fun syncSleep(from: Instant, to: Instant, fromMs: Long): Int {
+        var records = 0
         val segments = ArrayList<SleepSegment>()
         repository.readAll(SleepSessionRecord::class, from, to) { page ->
             for (record in page) {
                 val start = record.startTime.toEpochMilli()
                 if (start < fromMs) continue
+                records++
                 val source = repository.appLabel(record.metadata.dataOrigin.packageName)
                 if (record.stages.isEmpty()) {
                     // Источник не передал стадии — считаем весь отрезок сном.
@@ -284,6 +328,7 @@ class HealthConnectSyncer @Inject constructor(
                 )
             }
         }
+        return records
     }
 
     private fun mapStage(stage: Int): SleepStage = when (stage) {
@@ -297,7 +342,7 @@ class HealthConnectSyncer @Inject constructor(
         else -> SleepStage.ASLEEP
     }
 
-    private suspend fun syncWorkouts(from: Instant, to: Instant, fromMs: Long) {
+    private suspend fun syncWorkouts(from: Instant, to: Instant, fromMs: Long): Int {
         val rows = ArrayList<WorkoutEntity>()
         repository.readAll(ExerciseSessionRecord::class, from, to) { page ->
             for (record in page) {
@@ -318,13 +363,14 @@ class HealthConnectSyncer @Inject constructor(
             dao.deleteWorkoutsFrom(origin, fromMs)
             if (rows.isNotEmpty()) dao.insertWorkouts(rows)
         }
+        return rows.size
     }
 
     private suspend fun syncMeasurements(
         type: MeasurementType,
         fromMs: Long,
         read: suspend (out: (time: Instant, value: Double, packageName: String) -> Unit) -> Unit,
-    ) {
+    ): Int {
         val rows = ArrayList<MeasurementEntity>()
         read { time, value, packageName ->
             val ms = time.toEpochMilli()
@@ -334,13 +380,14 @@ class HealthConnectSyncer @Inject constructor(
             dao.deleteMeasurementsFrom(origin, type.ordinal, fromMs)
             rows.chunked(5_000).forEach(dao::insertMeasurements)
         }
+        return rows.size
     }
 
     private suspend fun syncTotals(
         type: TotalType,
         fromMs: Long,
         read: suspend () -> List<Pair<Instant, Double>>,
-    ) {
+    ): Int {
         val rows = read().map { (start, value) ->
             HourlyTotalEntity(type.ordinal, start.toEpochMilli() / HOUR_MS, origin, "", value)
         }
@@ -348,6 +395,7 @@ class HealthConnectSyncer @Inject constructor(
             dao.deleteHourlyTotalsFrom(origin, type.ordinal, fromMs / HOUR_MS)
             if (rows.isNotEmpty()) dao.insertHourlyTotals(rows)
         }
+        return rows.size
     }
 
     companion object {

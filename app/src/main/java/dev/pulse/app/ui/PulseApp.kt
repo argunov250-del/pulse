@@ -41,7 +41,13 @@ import dev.pulse.app.ui.strain.StrainScreen
 import dev.pulse.app.ui.trends.TrendsScreen
 import dev.pulse.app.ui.sleep.SleepScreen
 import dev.pulse.app.ui.sources.DataSourcesScreen
+import dev.pulse.app.data.health.HealthDataType
+import dev.pulse.app.ui.sources.DataSourcesUiState
 import dev.pulse.app.ui.sources.DataSourcesViewModel
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import dev.pulse.app.ui.journal.JournalScreen
 import dev.pulse.app.ui.theme.PulseTheme
 import dev.pulse.app.ui.today.TodayViewModel
@@ -154,6 +160,7 @@ fun PulseApp() {
                             onConnect = { open(Overlay.DATA_SOURCES) },
                             contentPadding = padding,
                             refreshing = sources.sync.running,
+                            syncNote = syncNote(sources),
                             onRefresh = {
                                 sourcesViewModel.syncNow()
                                 todayViewModel.refresh()
@@ -196,3 +203,30 @@ fun PulseApp() {
 
 /** Экраны, которые открываются поверх вкладок. */
 private enum class Overlay { SETTINGS, DATA_SOURCES, PROFILE }
+
+/** Короткая сводка последней синхронизации для главного экрана: когда была и что пришло по сну. */
+@Composable
+private fun syncNote(sources: DataSourcesUiState): String? {
+    if (!sources.anyGranted) return null
+    val sync = sources.sync
+    val time = sync.lastSyncMs?.let {
+        DateTimeFormatter.ofPattern("d MMM, HH:mm", Locale.forLanguageTag("ru"))
+            .format(Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()))
+    }
+    val sleep = sync.steps.firstOrNull { it.type == HealthDataType.SLEEP }
+    val parts = buildList {
+        add(if (time == null) stringResource(R.string.sync_never) else stringResource(R.string.sync_last, time))
+        if (sleep != null) {
+            add(
+                if (sleep.error != null) {
+                    stringResource(R.string.sync_note_sleep_error, sleep.error)
+                } else {
+                    stringResource(R.string.sync_note_sleep, sleep.count)
+                },
+            )
+        }
+        sync.error?.let { add(stringResource(R.string.sync_error, it)) }
+        if (sync.failedTypes > 0) add(stringResource(R.string.sync_partial, sync.failedTypes))
+    }
+    return parts.joinToString(" ")
+}

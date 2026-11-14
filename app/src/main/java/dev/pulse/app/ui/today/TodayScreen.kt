@@ -61,6 +61,8 @@ fun TodayScreen(
     refreshing: Boolean = false,
     /** Свайп вниз: обновить данные. */
     onRefresh: () -> Unit = {},
+    /** Что произошло при последней синхронизации — показывается, когда свежего сна нет. */
+    syncNote: String? = null,
     onOpenSleep: () -> Unit = {},
     onOpenStrain: () -> Unit = {},
     onOpenTrends: () -> Unit = {},
@@ -81,7 +83,10 @@ fun TodayScreen(
         Header(state, onOpenSettings)
         if (showConnectCard) ConnectCard(onConnect)
         if (state.stale) {
-            NoteCard(stringResource(R.string.today_stale_title), stringResource(R.string.today_stale_text))
+            NoteCard(
+                stringResource(R.string.today_stale_title),
+                stringResource(R.string.today_stale_text) + (syncNote?.let { "\n\n" + it } ?: ""),
+            )
         }
         RecoveryCard(state, onOpenTrends)
         Row(
