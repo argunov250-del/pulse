@@ -84,7 +84,7 @@ class DataSourcesViewModel @Inject constructor(
 
     /** Запустить синхронизацию прямо сейчас (кнопка на экране). */
     fun syncNow() {
-        viewModelScope.launch { runCatching { syncer.sync() } }
+        syncer.requestSync(force = true)
     }
 
     fun manageIntent() = repository.manageIntent()
@@ -113,7 +113,7 @@ class DataSourcesViewModel @Inject constructor(
                 )
             }
             // Заодно подтягиваем свежие данные в базу, если давно этого не делали.
-            if (items.any { it.granted }) runCatching { syncer.syncIfStale() }
+            if (items.any { it.granted }) syncer.requestSync(force = false)
         }
     }
 

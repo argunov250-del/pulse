@@ -352,4 +352,10 @@ Pulse не изменяет ваши данные. В Health Connect он зап
     <string name="data_distance_reason">Сколько вы прошли и пробежали за цикл.</string>
     <string name="sync_stored">В базе Pulse из Health Connect: сон — %1$s сессий, пульс — %2$s минут, шаги — %3$s часов. Самая свежая запись: %4$s.</string>
     <string name="sync_stored_empty">Из Health Connect в базу Pulse пока не попало ничего. Значит, ни одно приложение на этом телефоне не записало туда данные за последние 30 дней.</string>
+
+    <!-- Подробности синхронизации -->
+    <string name="sync_error">Синхронизация оборвалась: %1$s</string>
+    <string name="sync_steps_title">Получено из Health Connect в последний раз:</string>
+    <string name="sync_note_sleep">Записей сна получено: %1$d.</string>
+    <string name="sync_note_sleep_error">Сон прочитать не удалось: %1$s.</string>
 </resources>

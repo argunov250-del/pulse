@@ -203,6 +203,25 @@ private fun SyncCard(state: DataSourcesUiState, syncNow: () -> Unit, requestAcce
                 color = if (stored.lastTime == null) colors.recoveryYellow else colors.textSecondary,
             )
         }
+        sync.error?.let {
+            Text(
+                text = stringResource(R.string.sync_error, it),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.recoveryRed,
+            )
+        }
+        if (sync.steps.isNotEmpty()) {
+            // По каждому виду данных: сколько записей пришло из Health Connect или какая ошибка.
+            val lines = sync.steps.map { step ->
+                val name = stringResource(step.type.labelRes)
+                if (step.error != null) "• $name — ошибка: ${step.error}" else "• $name — ${step.count}"
+            }
+            Text(
+                text = stringResource(R.string.sync_steps_title) + "\n" + lines.joinToString("\n"),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.textSecondary,
+            )
+        }
         if (!sync.running && sync.failedTypes > 0) {
             Text(
                 text = stringResource(R.string.sync_partial, sync.failedTypes),
