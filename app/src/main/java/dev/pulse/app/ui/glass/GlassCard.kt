@@ -2,6 +2,7 @@ package dev.pulse.app.ui.glass
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -22,6 +23,7 @@ import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.HazeInput
@@ -53,6 +55,8 @@ fun GlassCard(
     modifier: Modifier = Modifier,
     cornerRadius: Dp = GlassDefaults.CornerRadius,
     contentPadding: PaddingValues = GlassDefaults.ContentPadding,
+    /** Если задано — карточка нажимается. */
+    onClick: (() -> Unit)? = null,
     content: @Composable BoxScope.() -> Unit,
 ) {
     val colors = PulseTheme.colors
@@ -79,6 +83,7 @@ fun GlassCard(
         modifier = modifier
             .softShadow(cornerRadius = cornerRadius, color = colors.glassShadow)
             .clip(shape)
+            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
             .then(glass)
             .border(GlassDefaults.BorderWidth, colors.glassBorder, shape)
             .padding(contentPadding),

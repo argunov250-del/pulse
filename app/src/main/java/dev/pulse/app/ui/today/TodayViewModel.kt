@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.pulse.app.algorithms.engine.CycleMetrics
 import dev.pulse.app.algorithms.engine.EngineOutput
 import dev.pulse.app.algorithms.engine.HrvMethod
+import dev.pulse.app.data.metrics.ActivitySummary
 import dev.pulse.app.data.metrics.MetricsRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -30,14 +31,14 @@ class TodayViewModel @Inject constructor(
         .map { s ->
             when {
                 s.loading -> null
-                else -> s.output?.let(::toUi) ?: FakeTodayData.state
+                else -> s.output?.let { toUi(it, s.activity) } ?: FakeTodayData.state
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     fun refresh() = metrics.refresh()
 
-    private fun toUi(output: EngineOutput): TodayUiState? {
+    private fun toUi(output: EngineOutput, activity: ActivitySummary?): TodayUiState? {
         val last: CycleMetrics = output.cycles.lastOrNull() ?: return null
         return TodayUiState(
             isDemo = false,
@@ -66,6 +67,18 @@ class TodayViewModel @Inject constructor(
                 )
             },
             ageUnknown = output.ageUnknown,
+            activity = activity?.let { a ->
+                ActivityUi(
+                    steps = a.steps?.roundToInt(),
+                    distanceKm = a.distanceMeters?.let { (it / 1000.0).toFloat() },
+                    activeKcal = a.activeKcal?.roundToInt(),
+                    totalKcal = a.totalKcal?.roundToInt(),
+                    averageHr = a.averageHr?.roundToInt(),
+                    maxHr = a.maxHr?.roundToInt(),
+                    latestHr = a.latestHr?.roundToInt(),
+                    latestHrTime = a.latestHrTimeMs?.let(::formatStart),
+                )
+            },
         )
     }
 

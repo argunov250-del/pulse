@@ -336,4 +336,20 @@ Pulse не изменяет ваши данные. В Health Connect он зап
     <string name="workout_saved">Тренировка сохранена в Pulse</string>
     <string name="workout_saved_written">Тренировка сохранена в Pulse и записана в Health Connect</string>
     <string name="workout_saved_not_written">Тренировка сохранена в Pulse, но записать её в Health Connect не удалось</string>
+
+    <!-- Активность на главном экране -->
+    <string name="activity_title">Активность за цикл</string>
+    <string name="activity_steps">шаги</string>
+    <string name="activity_distance">дистанция</string>
+    <string name="activity_km">%1$s км</string>
+    <string name="activity_kcal_active">активные калории</string>
+    <string name="activity_kcal_total">все калории</string>
+    <string name="activity_kcal">%1$d ккал</string>
+    <string name="activity_hr_avg">средний пульс</string>
+    <string name="activity_hr_max">максимальный пульс</string>
+    <string name="activity_hr_latest">Последнее измерение пульса: %1$d уд/мин, %2$s</string>
+    <string name="data_distance">Дистанция</string>
+    <string name="data_distance_reason">Сколько вы прошли и пробежали за цикл.</string>
+    <string name="sync_stored">В базе Pulse из Health Connect: сон — %1$s сессий, пульс — %2$s минут, шаги — %3$s часов. Самая свежая запись: %4$s.</string>
+    <string name="sync_stored_empty">Из Health Connect в базу Pulse пока не попало ничего. Значит, ни одно приложение на этом телефоне не записало туда данные за последние 30 дней.</string>
 </resources>

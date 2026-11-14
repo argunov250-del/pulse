@@ -34,6 +34,21 @@ data class MetricsState(
     val loading: Boolean = true,
     val output: EngineOutput? = null,
     val computedAtMs: Long = 0,
+    /** Шаги, дистанция, калории и пульс за последний цикл; null — циклов нет. */
+    val activity: ActivitySummary? = null,
+)
+
+/** Активность за цикл. null в поле — таких данных нет. */
+data class ActivitySummary(
+    val steps: Double?,
+    val distanceMeters: Double?,
+    val activeKcal: Double?,
+    val totalKcal: Double?,
+    val averageHr: Double?,
+    val maxHr: Double?,
+    /** Самое свежее измерение пульса и его время. */
+    val latestHr: Double?,
+    val latestHrTimeMs: Long?,
 )
 
 /**
@@ -60,7 +75,7 @@ class MetricsRepository @Inject constructor(
             val now = System.currentTimeMillis()
             val output = compute(sessions, now)
             publisher.publish(output)
-            MetricsState(loading = false, output = output, computedAtMs = now)
+            MetricsState(loading = false, output = output, computedAtMs = now, activity = activity(output, now))
         }
         .stateIn(scope, SharingStarted.WhileSubscribed(5_000), MetricsState())
 
@@ -114,6 +129,30 @@ class MetricsRepository @Inject constructor(
                 profile = profiles.load().toEngineProfile(),
                 nowMs = nowMs,
             ),
+        )
+    }
+
+    /** Шаги, дистанция, калории и пульс за последний цикл (от пробуждения до его конца или до «сейчас»). */
+    private suspend fun activity(output: EngineOutput, nowMs: Long): ActivitySummary? {
+        val cycle = output.cycles.lastOrNull()?.cycle ?: return null
+        val end = cycle.endMs ?: nowMs
+        val fromHour = cycle.startMs / 3_600_000L
+        val toHour = end / 3_600_000L
+        suspend fun total(type: TotalType) = dao.totalBetween(type.ordinal, fromHour, toHour)
+        val active = total(TotalType.ACTIVE_KCAL)
+        val basal = total(TotalType.BASAL_KCAL)
+        val hr = dao.heartRateStats(cycle.startMs / 60_000L, end / 60_000L)
+        val latest = dao.latestHeartRate()
+        return ActivitySummary(
+            steps = total(TotalType.STEPS),
+            distanceMeters = total(TotalType.DISTANCE_M),
+            activeKcal = active,
+            // Health Connect даёт общий расход сразу; Apple — отдельно активный и «в покое».
+            totalKcal = total(TotalType.TOTAL_KCAL) ?: if (active != null && basal != null) active + basal else null,
+            averageHr = hr.average,
+            maxHr = hr.maximum,
+            latestHr = latest?.bpm,
+            latestHrTimeMs = latest?.minute?.times(60_000L),
         )
     }
 

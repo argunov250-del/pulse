@@ -19,6 +19,8 @@ data class StoredDataSummary(
 
 data class HeartRatePoint(val minute: Long, val bpm: Double)
 
+data class HeartRateStats(val average: Double?, val maximum: Double?)
+
 data class ValuePoint(val timeMs: Long, val value: Double)
 
 /**
@@ -185,6 +187,37 @@ interface HealthDao {
         """,
     )
     suspend fun hourlyTotalsFrom(type: Int, fromHour: Long): List<ValuePoint>
+
+    // ---- Активность за отрезок времени ----
+
+    /** Сумма за часы от [fromHour] до [toHour]; если час записали несколько источников — берётся наибольший. */
+    @Query(
+        """
+        SELECT SUM(v) FROM (
+            SELECT MAX(total) AS v FROM hourly_totals
+            WHERE type = :type AND hour BETWEEN :fromHour AND :toHour GROUP BY hour
+        )
+        """,
+    )
+    suspend fun totalBetween(type: Int, fromHour: Long, toHour: Long): Double?
+
+    @Query(
+        """
+        SELECT AVG(b) AS average, MAX(b) AS maximum FROM (
+            SELECT SUM(bpmSum) / SUM(sampleCount) AS b FROM heart_rate_minutes
+            WHERE minute BETWEEN :fromMinute AND :toMinute AND sampleCount > 0 GROUP BY minute
+        )
+        """,
+    )
+    suspend fun heartRateStats(fromMinute: Long, toMinute: Long): HeartRateStats
+
+    @Query(
+        """
+        SELECT minute, SUM(bpmSum) / SUM(sampleCount) AS bpm FROM heart_rate_minutes
+        WHERE sampleCount > 0 GROUP BY minute ORDER BY minute DESC LIMIT 1
+        """,
+    )
+    suspend fun latestHeartRate(): HeartRatePoint?
 
     // ---- Сводка ----
 

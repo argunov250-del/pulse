@@ -18,6 +18,7 @@
     <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED" />
     <uses-permission android:name="android.permission.health.READ_WEIGHT" />
     <uses-permission android:name="android.permission.health.READ_VO2_MAX" />
+    <uses-permission android:name="android.permission.health.READ_DISTANCE" />
     <!-- Запись в Health Connect тренировок, добавленных в Pulse вручную (по желанию). -->
     <uses-permission android:name="android.permission.health.WRITE_EXERCISE" />
     <!-- Чтобы обновлять данные, когда приложение закрыто. -->
