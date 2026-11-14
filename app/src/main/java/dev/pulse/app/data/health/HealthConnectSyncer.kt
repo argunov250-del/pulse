@@ -1,6 +1,7 @@
 package dev.pulse.app.data.health
 
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
+import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.HeartRateVariabilityRmssdRecord
@@ -178,6 +179,11 @@ class HealthConnectSyncer @Inject constructor(
                 step(HealthDataType.STEPS) {
                     syncTotals(TotalType.STEPS, fromMs) {
                         repository.hourlyTotals(StepsRecord.COUNT_TOTAL, from, now) { it.toDouble() }
+                    }
+                }
+                step(HealthDataType.DISTANCE) {
+                    syncTotals(TotalType.DISTANCE_M, fromMs) {
+                        repository.hourlyTotals(DistanceRecord.DISTANCE_TOTAL, from, now) { it.inMeters }
                     }
                 }
                 step(HealthDataType.ACTIVE_CALORIES) {

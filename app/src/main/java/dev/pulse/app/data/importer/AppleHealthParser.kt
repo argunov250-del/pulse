@@ -23,7 +23,7 @@ enum class MeasurementType {
 }
 
 /** Показатели, которые суммируются за период. Порядок менять нельзя. */
-enum class TotalType { STEPS, ACTIVE_KCAL, BASAL_KCAL, TOTAL_KCAL }
+enum class TotalType { STEPS, ACTIVE_KCAL, BASAL_KCAL, TOTAL_KCAL, DISTANCE_M }
 
 /** Куда парсер отдаёт то, что нашёл в файле. */
 interface AppleHealthSink {
@@ -142,6 +142,17 @@ object AppleHealthParser {
             )
             "VO2Max" -> sink.onMeasurement(MeasurementType.VO2_MAX, start, value, source)
             "StepCount" -> sink.onTotal(TotalType.STEPS, start, value, source)
+            "DistanceWalkingRunning" -> sink.onTotal(
+                TotalType.DISTANCE_M, start,
+                when (unit) {
+                    "km" -> value * 1000.0
+                    "mi" -> value * 1609.344
+                    "ft" -> value * 0.3048
+                    "yd" -> value * 0.9144
+                    else -> value
+                },
+                source,
+            )
             "ActiveEnergyBurned" -> sink.onTotal(TotalType.ACTIVE_KCAL, start, toKcal(value, unit), source)
             "BasalEnergyBurned" -> sink.onTotal(TotalType.BASAL_KCAL, start, toKcal(value, unit), source)
         }

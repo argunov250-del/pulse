@@ -9,6 +9,7 @@ import androidx.health.connect.client.HealthConnectFeatures
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
+import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.HeartRateVariabilityRmssdRecord
@@ -164,6 +165,7 @@ class HealthConnectRepository @Inject constructor(
         is TotalCaloriesBurnedRecord -> record.endTime
         is WeightRecord -> record.time
         is Vo2MaxRecord -> record.time
+        is DistanceRecord -> record.endTime
         else -> null
     }
 

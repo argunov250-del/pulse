@@ -3,6 +3,9 @@ package dev.pulse.app.ui.sources
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.pulse.app.data.db.DataOrigin
+import dev.pulse.app.data.db.HealthDao
+import dev.pulse.app.data.db.StoredDataSummary
 import dev.pulse.app.data.health.DataAvailability
 import dev.pulse.app.data.health.HealthConnectRepository
 import dev.pulse.app.data.health.HealthConnectStatus
@@ -29,6 +32,8 @@ data class DataSourcesUiState(
     val backgroundSupported: Boolean = false,
     val backgroundGranted: Boolean = false,
     val sync: SyncState = SyncState(),
+    /** Что уже лежит в базе Pulse из Health Connect. */
+    val stored: StoredDataSummary? = null,
 ) {
     private val supported get() = items.filter { it.supported }
     val grantedCount: Int get() = supported.count { it.granted }
@@ -43,6 +48,7 @@ data class DataSourcesUiState(
 class DataSourcesViewModel @Inject constructor(
     private val repository: HealthConnectRepository,
     private val syncer: HealthConnectSyncer,
+    private val dao: HealthDao,
     private val themeSettings: ThemeSettings,
     private val notifier: RecoveryNotifier,
 ) : ViewModel() {
@@ -61,7 +67,11 @@ class DataSourcesViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             syncer.loadState()
-            syncer.state.collect { sync -> _state.update { it.copy(sync = sync) } }
+            syncer.state.collect { sync ->
+                // После каждой синхронизации пересчитываем, что реально попало в базу.
+                val stored = if (sync.running) _state.value.stored else dao.summary(DataOrigin.HEALTH_CONNECT)
+                _state.update { it.copy(sync = sync, stored = stored) }
+            }
         }
     }
 

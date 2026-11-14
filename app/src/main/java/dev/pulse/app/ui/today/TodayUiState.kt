@@ -30,6 +30,20 @@ data class TodayUiState(
     val bioAge: BioAgeUi?,
     /** true — возраст человека неизвестен, биологический возраст не посчитать. */
     val ageUnknown: Boolean = false,
+    /** Шаги, дистанция, калории и пульс за цикл; null — показывать нечего. */
+    val activity: ActivityUi? = null,
+)
+
+data class ActivityUi(
+    val steps: Int?,
+    val distanceKm: Float?,
+    val activeKcal: Int?,
+    val totalKcal: Int?,
+    val averageHr: Int?,
+    val maxHr: Int?,
+    val latestHr: Int?,
+    /** Когда было последнее измерение пульса, уже текстом. */
+    val latestHrTime: String?,
 )
 
 data class BioAgeUi(
@@ -65,5 +79,9 @@ object FakeTodayData {
         restingHeartRate = VitalUi(value = 54f, baseline = 56f, decimals = 0, higherIsBetter = false),
         respiratoryRate = VitalUi(value = 14.8f, baseline = 15.0f, decimals = 1, higherIsBetter = null),
         bioAge = BioAgeUi(bioAgeYears = 34.2f, chronologicalAgeYears = 37),
+        activity = ActivityUi(
+            steps = 8420, distanceKm = 6.1f, activeKcal = 540, totalKcal = 2310,
+            averageHr = 78, maxHr = 152, latestHr = 71, latestHrTime = "14:05",
+        ),
     )
 }

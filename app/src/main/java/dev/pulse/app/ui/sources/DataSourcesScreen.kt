@@ -186,6 +186,23 @@ private fun SyncCard(state: DataSourcesUiState, syncNow: () -> Unit, requestAcce
     }
     InfoCard(title = stringResource(R.string.sync_title), text = stringResource(R.string.sync_text)) {
         Text(text = status, style = MaterialTheme.typography.bodyMedium, color = colors.textPrimary)
+        state.stored?.let { stored ->
+            Text(
+                text = if (stored.lastTime == null) {
+                    stringResource(R.string.sync_stored_empty)
+                } else {
+                    stringResource(
+                        R.string.sync_stored,
+                        stored.sleepSessions.toString(),
+                        stored.heartRateMinutes.toString(),
+                        stored.stepHours.toString(),
+                        formatInstant(Instant.ofEpochMilli(stored.lastTime)),
+                    )
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = if (stored.lastTime == null) colors.recoveryYellow else colors.textSecondary,
+            )
+        }
         if (!sync.running && sync.failedTypes > 0) {
             Text(
                 text = stringResource(R.string.sync_partial, sync.failedTypes),

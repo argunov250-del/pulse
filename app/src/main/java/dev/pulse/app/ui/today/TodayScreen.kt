@@ -17,7 +17,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -45,6 +47,7 @@ import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodayScreen(
     state: TodayUiState,
@@ -54,9 +57,21 @@ fun TodayScreen(
     showConnectCard: Boolean = false,
     onConnect: () -> Unit = {},
     contentPadding: PaddingValues = PaddingValues(0.dp),
+    /** true — идёт обновление данных (показывается индикатор сверху). */
+    refreshing: Boolean = false,
+    /** Свайп вниз: обновить данные. */
+    onRefresh: () -> Unit = {},
+    onOpenSleep: () -> Unit = {},
+    onOpenStrain: () -> Unit = {},
+    onOpenTrends: () -> Unit = {},
 ) {
+    PullToRefreshBox(
+        isRefreshing = refreshing,
+        onRefresh = onRefresh,
+        modifier = modifier.fillMaxSize(),
+    ) {
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(contentPadding)
@@ -68,15 +83,15 @@ fun TodayScreen(
         if (state.stale) {
             NoteCard(stringResource(R.string.today_stale_title), stringResource(R.string.today_stale_text))
         }
-        RecoveryCard(state)
+        RecoveryCard(state, onOpenTrends)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(IntrinsicSize.Min),
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            StrainCard(state, Modifier.weight(1f).fillMaxHeight())
-            SleepCard(state, Modifier.weight(1f).fillMaxHeight())
+            StrainCard(state, onOpenStrain, Modifier.weight(1f).fillMaxHeight())
+            SleepCard(state, onOpenSleep, Modifier.weight(1f).fillMaxHeight())
         }
         Row(
             modifier = Modifier
@@ -88,23 +103,28 @@ fun TodayScreen(
                 label = stringResource(R.string.hrv_label),
                 unit = stringResource(if (state.hrvIsSdnn) R.string.hrv_unit_sdnn else R.string.hrv_unit),
                 vital = state.hrv,
+                onClick = onOpenTrends,
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             )
             VitalCard(
                 label = stringResource(R.string.rhr_label),
                 unit = stringResource(R.string.rhr_unit),
                 vital = state.restingHeartRate,
+                onClick = onOpenTrends,
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             )
             VitalCard(
                 label = stringResource(R.string.resp_label),
                 unit = stringResource(R.string.resp_unit),
                 vital = state.respiratoryRate,
+                onClick = onOpenTrends,
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             )
         }
+        state.activity?.let { ActivityCard(it, onOpenStrain) }
         BioAgeCard(state.bioAge, state.ageUnknown)
         Spacer(Modifier.height(8.dp))
+    }
     }
 }
 
@@ -190,7 +210,7 @@ private fun NoteCard(title: String, text: String) {
 }
 
 @Composable
-private fun RecoveryCard(state: TodayUiState) {
+private fun RecoveryCard(state: TodayUiState, onClick: () -> Unit) {
     val colors = PulseTheme.colors
     val percent = state.recoveryPercent
     val zone = percent?.let(::recoveryZone)
@@ -217,7 +237,7 @@ private fun RecoveryCard(state: TodayUiState) {
         },
     )
 
-    GlassCard(modifier = Modifier.fillMaxWidth()) {
+    GlassCard(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             MetricRing(
                 progress = (percent ?: 0) / 100f,
@@ -302,7 +322,7 @@ private fun RecoveryCard(state: TodayUiState) {
 }
 
 @Composable
-private fun StrainCard(state: TodayUiState, modifier: Modifier = Modifier) {
+private fun StrainCard(state: TodayUiState, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = PulseTheme.colors
     RingCard(
         title = stringResource(R.string.strain_label),
@@ -316,6 +336,7 @@ private fun StrainCard(state: TodayUiState, modifier: Modifier = Modifier) {
         progress = (state.strain ?: 0f) / Config.STRAIN_MAX,
         color = colors.strain,
         delayMillis = 150,
+        onClick = onClick,
         modifier = modifier,
     ) { fraction ->
         Text(
@@ -328,7 +349,7 @@ private fun StrainCard(state: TodayUiState, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun SleepCard(state: TodayUiState, modifier: Modifier = Modifier) {
+private fun SleepCard(state: TodayUiState, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = PulseTheme.colors
     RingCard(
         title = stringResource(R.string.sleep_label),
@@ -340,6 +361,7 @@ private fun SleepCard(state: TodayUiState, modifier: Modifier = Modifier) {
         progress = state.sleepPerformancePercent / 100f,
         color = colors.sleep,
         delayMillis = 300,
+        onClick = onClick,
         modifier = modifier,
     ) { fraction ->
         Row(verticalAlignment = Alignment.Bottom) {
@@ -367,11 +389,12 @@ private fun RingCard(
     progress: Float,
     color: Color,
     delayMillis: Int,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     center: @Composable (animationFraction: Float) -> Unit,
 ) {
     val colors = PulseTheme.colors
-    GlassCard(modifier = modifier) {
+    GlassCard(modifier = modifier, onClick = onClick) {
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -406,6 +429,7 @@ private fun VitalCard(
     label: String,
     unit: String,
     vital: VitalUi?,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = PulseTheme.colors
@@ -429,6 +453,7 @@ private fun VitalCard(
         modifier = modifier,
         cornerRadius = 20.dp,
         contentPadding = PaddingValues(12.dp),
+        onClick = onClick,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
@@ -522,6 +547,76 @@ private fun BioAgeCard(bioAge: BioAgeUi?, ageUnknown: Boolean) {
         }
     }
 }
+
+/** Карточка «Активность»: шаги, дистанция, калории и пульс за цикл. */
+@Composable
+private fun ActivityCard(activity: ActivityUi, onClick: () -> Unit) {
+    val colors = PulseTheme.colors
+    val dash = "—"
+    GlassCard(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                text = stringResource(R.string.activity_title),
+                style = MaterialTheme.typography.titleSmall,
+                color = colors.textPrimary,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                ActivityValue(
+                    stringResource(R.string.activity_steps),
+                    activity.steps?.let { String.format(ruLocale, "%,d", it) } ?: dash,
+                    Modifier.weight(1f),
+                )
+                ActivityValue(
+                    stringResource(R.string.activity_distance),
+                    activity.distanceKm?.let { stringResource(R.string.activity_km, formatNumber(it, 1)) } ?: dash,
+                    Modifier.weight(1f),
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                ActivityValue(
+                    stringResource(R.string.activity_kcal_active),
+                    activity.activeKcal?.let { stringResource(R.string.activity_kcal, it) } ?: dash,
+                    Modifier.weight(1f),
+                )
+                ActivityValue(
+                    stringResource(R.string.activity_kcal_total),
+                    activity.totalKcal?.let { stringResource(R.string.activity_kcal, it) } ?: dash,
+                    Modifier.weight(1f),
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                ActivityValue(
+                    stringResource(R.string.activity_hr_avg),
+                    activity.averageHr?.toString() ?: dash,
+                    Modifier.weight(1f),
+                )
+                ActivityValue(
+                    stringResource(R.string.activity_hr_max),
+                    activity.maxHr?.toString() ?: dash,
+                    Modifier.weight(1f),
+                )
+            }
+            if (activity.latestHr != null && activity.latestHrTime != null) {
+                Text(
+                    text = stringResource(R.string.activity_hr_latest, activity.latestHr, activity.latestHrTime),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.textSecondary,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ActivityValue(label: String, value: String, modifier: Modifier) {
+    val colors = PulseTheme.colors
+    Column(modifier = modifier) {
+        Text(text = value, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
+        Text(text = label, style = MaterialTheme.typography.labelSmall, color = colors.textSecondary)
+    }
+}
+
+private val ruLocale: Locale = Locale.forLanguageTag("ru")
 
 /** Список факторов биологического возраста одного знака («молодит» или «старит»). */
 @Composable

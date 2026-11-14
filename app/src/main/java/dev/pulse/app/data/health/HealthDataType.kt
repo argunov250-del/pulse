@@ -2,6 +2,7 @@ package dev.pulse.app.data.health
 
 import androidx.annotation.StringRes
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
+import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.HeartRateVariabilityRmssdRecord
@@ -47,4 +48,5 @@ enum class HealthDataType(
     TOTAL_CALORIES(TotalCaloriesBurnedRecord::class, R.string.data_total_cal, R.string.data_total_cal_reason),
     WEIGHT(WeightRecord::class, R.string.data_weight, R.string.data_weight_reason),
     VO2_MAX(Vo2MaxRecord::class, R.string.data_vo2max, R.string.data_vo2max_reason),
+    DISTANCE(DistanceRecord::class, R.string.data_distance, R.string.data_distance_reason),
 }

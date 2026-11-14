@@ -153,6 +153,14 @@ fun PulseApp() {
                             showConnectCard = sources.needsConnection,
                             onConnect = { open(Overlay.DATA_SOURCES) },
                             contentPadding = padding,
+                            refreshing = sources.sync.running,
+                            onRefresh = {
+                                sourcesViewModel.syncNow()
+                                todayViewModel.refresh()
+                            },
+                            onOpenSleep = { tab = PulseTab.SLEEP },
+                            onOpenStrain = { tab = PulseTab.STRAIN },
+                            onOpenTrends = { tab = PulseTab.TRENDS },
                         )
                         PulseTab.SLEEP -> SleepScreen(contentPadding = padding)
                         PulseTab.STRAIN -> StrainScreen(contentPadding = padding)
